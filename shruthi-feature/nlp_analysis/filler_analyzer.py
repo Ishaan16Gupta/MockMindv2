@@ -60,15 +60,29 @@ def _count_filler_like(doc) -> int:
     """
     Count 'like' used as a filler vs. meaningful verb/preposition.
 
-    Heuristic: 'like' is a filler when it is NOT:
-      - A verb (POS=VERB): "I like hashmaps"
-      - A preposition/conjunction introducing a comparison (POS=ADP/SCONJ):
-        "works like a queue"
-    Anything else (INTJ, ADV, or spaCy's uncertain tag) → filler.
+        Heuristic: 'like' is a filler when it is NOT:
+            - A verb (POS=VERB): "I like hashmaps"
+            - A comparison preposition/conjunction (POS=ADP/SCONJ):
+                "works like a queue"
+
+        Special case: in spoken transcripts, "be + like" is often a discourse
+        marker ("it's like the right approach"), so count that as filler.
+
+        Anything else (INTJ, ADV, or spaCy's uncertain tag) → filler.
     """
     count = 0
     for token in doc:
         if token.lower_ == "like":
+            if token.pos_ == "VERB":
+                continue
+
+            if token.pos_ in ("ADP", "SCONJ"):
+                # "it's like ..." / "that is like ..." often behaves as a
+                # filler/discourse marker in interview speech.
+                if token.head.lemma_ == "be":
+                    count += 1
+                continue
+
             if token.pos_ not in ("VERB", "ADP", "SCONJ"):
                 count += 1
     return count

@@ -1,273 +1,102 @@
-# MockMind NLP Module — Full Explainer
+# MockMind NLP Module (Steps 1-3 Only)
 
----
+This document describes the current Shruthi feature scope.
 
-## 1. File Structure
+## Scope
 
-```
-MockMind/
-│
-├── .env                        ← Your secret API key (never committed to git)
-├── .env.example                ← Template showing what .env should look like
-├── .gitignore                  ← Tells git to ignore .env, temp files, etc.
-├── requirements.txt            ← Python packages needed to run this
-├── demo.py                     ← Runnable example — drop real inputs here to test
-│
-├── nlp_analysis/               ← The actual module (the "brain")
-│   ├── __init__.py             ← Makes this a package; exports analyze()
-│   ├── __main__.py             ← Lets you run it from terminal: python3 -m nlp_analysis
-│   ├── pipeline.py             ← THE MAIN FILE — calls all steps in order, returns JSON
-│   ├── llm_client.py           ← Handles all communication with Gemini API
-│   │
-│   ├── transcript_cleaner.py   ← Step 1: cleans raw speech-to-text
-│   ├── filler_analyzer.py      ← Step 2: counts "um", "like", "you know" etc.
-│   ├── confidence_scorer.py    ← Step 3: scores how confident the student sounds
-│   ├── relevance_checker.py    ← Step 4: did they answer the question? (Gemini)
-│   ├── weakness_extractor.py   ← Step 5: what's the gap? generates Q2 (Gemini)
-│   └── coherence_checker.py    ← Step 6: does code match what they said? (Gemini)
-│
+This module only performs transcript-based NLP analysis on speech-to-text output:
+
+1. Transcript cleaning
+2. Filler-word analysis
+3. Confidence scoring
+
+It does not include interview generation, code-vs-speech matching checks, or follow-up question generation.
+
+## Folder Structure
+
+```text
+shruthi-feature/
+├── demo.py
+├── requirements.txt
+├── nlp_analysis/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── pipeline.py
+│   ├── transcript_cleaner.py
+│   ├── filler_analyzer.py
+│   └── confidence_scorer.py
 └── tests/
-    ├── __init__.py
-    └── test_pipeline.py        ← All 32 automated tests live here
+    └── test_pipeline.py
 ```
 
-**The one file you care about most:** `pipeline.py` — it's the single entry point.
-Everything else is a helper it calls internally.
+## Data Flow
 
----
+Input:
+- Raw transcript text from a speech-to-text converter
 
-## 2. The Test File — What's Being Tested
+Processing:
+- Step 1: `clean_transcript(...)`
+- Step 2: `analyze_fillers(...)`
+- Step 3: `score_confidence(...)`
 
-`tests/test_pipeline.py` has **32 test cases** across 7 groups:
+Output:
+- `cleaned_transcript`
+- `filler_words`
+- `confidence`
 
-### Group 1 — Transcript Cleaner (6 tests)
-| Test | What it checks |
-|---|---|
-| `test_removes_filler_sounds` | "uh", "um", "hmm" are stripped |
-| `test_removes_stutters` | "I I think" → "I think" |
-| `test_preserves_meaningful_content` | Real words like "hash map" survive |
-| `test_adds_punctuation` | Sentences end with `.` or `?` |
-| `test_empty_input` | Empty string returns empty string, no crash |
-| `test_only_fillers` | Input of only "um uh hmm" → nearly empty output |
+## Public API
 
-### Group 2 — Filler Analyzer (5 tests)
-| Test | What it checks |
-|---|---|
-| `test_counts_unambiguous_fillers` | "basically", "you know" are counted |
-| `test_rate_per_minute` | Rate is a float ≥ 0 |
-| `test_top_three` | Returns a list of ≤ 3 items |
-| `test_no_fillers` | Clean technical sentence → count = 0 |
-| `test_empty_input` | Empty string → count = 0, no crash |
+```python
+from nlp_analysis import analyze
 
-### Group 3 — Confidence Scorer (5 tests)
-| Test | What it checks |
-|---|---|
-| `test_detects_hedging` | "I think", "maybe" reduce the score |
-| `test_detects_assertions` | "The solution is", "This handles" raise the score |
-| `test_no_signals` | Neutral sentence → default score of 5.0 |
-| `test_all_hedging` | All hedge phrases → score < 3.0 |
-| `test_empty_input` | Empty string → default 5.0, no crash |
+result = analyze(transcript)
+```
 
-### Group 4 — Relevance Checker (4 tests)
-| Test | What it checks |
-|---|---|
-| `test_addressed_question` | Student who answered → `addressed: true` |
-| `test_short_transcript` | < 30 words → "low data confidence" in missed |
-| `test_empty_transcript` | No answer → `addressed: false` |
-| `test_bluffing_detection` | "O(n) because nested loop" → `bluffing: true` |
+`result` has this structure:
 
-### Group 5 — Weakness Extractor (3 tests)
-| Test | What it checks |
-|---|---|
-| `test_generates_gap_and_q2` | Both `gap` and `q2_probe` fields exist and are non-empty |
-| `test_q2_does_not_give_answer` | Q2 never contains "the answer is", "you're wrong" etc. |
-| `test_q2_is_not_harsh` | Q2 never contains "wrong", "incorrect", "bad" |
+```json
+{
+  "cleaned_transcript": "...",
+  "filler_words": {
+    "count": 0,
+    "rate_per_minute": 0.0,
+    "breakdown": {},
+    "top_three": []
+  },
+  "confidence": {
+    "score": 5.0,
+    "hedge_count": 0,
+    "assert_count": 0,
+    "low_confidence_moments": []
+  }
+}
+```
 
-### Group 6 — Coherence Checker (4 tests)
-| Test | What it checks |
-|---|---|
-| `test_coherent_code_and_speech` | Matching explanation + code → `coherent: true` |
-| `test_complexity_mismatch` | Claims O(n log n), code is O(n²) → `coherent: false` |
-| `test_empty_code` | No code → "No code written yet" in mismatch |
-| `test_empty_transcript` | No speech → "No verbal explanation" in mismatch |
+## CLI Usage
 
-### Group 7 — Full Pipeline End-to-End (5 tests)
-| Test | What it checks |
-|---|---|
-| `test_full_pipeline_returns_valid_structure` | All 6 top-level keys exist with correct types |
-| `test_json_output_is_valid` | `analyze_to_json()` returns parseable JSON string |
-| `test_pipeline_with_nested_loop_mismatch` | Full run where speech ≠ code → coherence false |
-| `test_pipeline_empty_code` | Full run with no code → handled gracefully |
-| `test_pipeline_short_transcript` | Full run with 3-word answer → low data confidence |
+```bash
+python3 -m nlp_analysis --transcript "um I think we can use a hash map"
+python3 -m nlp_analysis --transcript-file answer.txt
+```
 
-**All 32 pass** — run them yourself with:
+## Demo
+
+Run:
+
+```bash
+python3 demo.py
+```
+
+## Tests
+
+Run:
+
 ```bash
 python3 -m pytest tests/test_pipeline.py -v
 ```
 
----
-
-## 3. How Input → Analysis → Output Works
-
-Think of this module like a factory. Raw materials go in one end, structured report comes out the other.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        YOUR INPUTS                          │
-│                                                             │
-│  transcript = "um so I think I'd use a hash map you know"  │
-│  question   = "What's the time complexity of your approach?"│
-│  code       = "for i in nums:\n  for j in nums: ..."       │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-              from nlp_analysis import analyze
-              result = analyze(transcript, question, code)
-                         │
-          ┌──────────────┼──────────────┐
-          │    spaCy     │    Gemini    │
-          │  (Steps 1-3) │  (Steps 4-6) │
-          └──────────────┴──────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      YOUR OUTPUT (dict)                     │
-│                                                             │
-│  result["cleaned_transcript"]  → cleaned text               │
-│  result["filler_words"]        → counts, rate, top 3        │
-│  result["confidence"]          → score, low-confidence list │
-│  result["relevance"]           → addressed?, missed, bluff? │
-│  result["weakness"]            → gap + Q2 follow-up         │
-│  result["coherence"]           → match?, mismatch desc      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**The call is one line:**
-```python
-from nlp_analysis import analyze
-result = analyze(transcript, question, code_snapshot)
-```
-
-`result` is a plain Python dictionary. You can:
-- Store it in a database as JSON
-- Send it over a REST API
-- Read specific fields in your frontend
-- Pass it to another AI model
-
----
-
-## 4. Integrating with ElevenLabs
-
-ElevenLabs does **text-to-speech** (TTS) and **speech-to-text** (STT/transcription).
-This module sits *after* ElevenLabs in your pipeline.
-
-### 4a. ElevenLabs as the STT input (speech → transcript)
-
-```
-Student speaks
-     ↓
-ElevenLabs Speech-to-Text API
-     ↓  returns raw transcript string
-MockMind NLP analyze()
-     ↓  returns structured JSON
-AI interviewer / report generator
-```
-
-**What you'd need to do:**
-```python
-# 1. Get transcript from ElevenLabs STT
-import requests
-
-el_response = requests.post(
-    "https://api.elevenlabs.io/v1/speech-to-text",
-    headers={"xi-api-key": "your_elevenlabs_key"},
-    files={"audio": open("student_audio.mp3", "rb")}
-)
-raw_transcript = el_response.json()["text"]
-
-# 2. Feed directly into MockMind
-from nlp_analysis import analyze
-result = analyze(raw_transcript, question, code_snapshot)
-```
-
-The raw STT output from ElevenLabs will have filler words and missing punctuation — that's exactly what Step 1 (transcript cleaner) is designed to fix.
-
-### 4b. ElevenLabs as the TTS output (Q2 → voice)
-
-After MockMind generates the follow-up question, you can speak it aloud to the student using ElevenLabs TTS:
-
-```python
-# Get the Q2 probe from MockMind's output
-q2_text = result["weakness"]["q2_probe"]
-# → "You mentioned O(n log n) — can you walk me through what happens
-#    to your loop count as the input size doubles?"
-
-# Convert to speech with ElevenLabs TTS
-tts_response = requests.post(
-    "https://api.elevenlabs.io/v1/text-to-speech/voice_id_here",
-    headers={"xi-api-key": "your_elevenlabs_key"},
-    json={"text": q2_text, "model_id": "eleven_monolingual_v1"}
-)
-
-# Play the audio back to student
-with open("q2_audio.mp3", "wb") as f:
-    f.write(tts_response.content)
-```
-
-### What you'd need to set up for deployment
-- An ElevenLabs account (free tier available)
-- A server to run your Python code (Railway, Render, or AWS Lambda all work)
-- A REST endpoint that accepts `{transcript, question, code}` and returns the JSON
-- The two API keys in your `.env`: `GEMINI_API_KEY` and `ELEVENLABS_API_KEY`
-
----
-
-## 5. How to Expose This as an API (for a Frontend Later)
-
-Right now this is a Python library. To connect it to any frontend (React, mobile app, etc.), you'd wrap it in a simple web server. Here's the absolute minimum:
-
-```python
-# server.py — add this file to your project
-from flask import Flask, request, jsonify
-from nlp_analysis import analyze
-
-app = Flask(__name__)
-
-@app.route("/analyze", methods=["POST"])
-def analyze_endpoint():
-    data = request.json
-    result = analyze(
-        transcript=data["transcript"],
-        question=data["question"],
-        code_snapshot=data.get("code", "")
-    )
-    return jsonify(result)
-
-if __name__ == "__main__":
-    app.run(port=5000)
-```
-
-Then your frontend (or ElevenLabs webhook) just does:
-```
-POST http://your-server.com/analyze
-Body: { "transcript": "...", "question": "...", "code": "..." }
-→  Returns the full JSON analysis
-```
-
----
-
-## 6. Who Consumes the Output
-
-You mentioned two downstream systems:
-
-| Consumer | Fields it uses |
-|---|---|
-| **AI Interviewer** (generates Q2) | `weakness.q2_probe` — the follow-up question to ask next |
-| **Report Generator** (student feedback) | `filler_words`, `confidence.score`, `confidence.low_confidence_moments`, `relevance.missed`, `coherence.mismatch` |
-
-The report generator gets everything it needs to tell the student things like:
-- *"You used 'you know' 5 times — that's 8 per minute"*
-- *"You hedged in 3 sentences: [lists the exact quotes]*"
-- *"You didn't mention how to handle an empty input"*
-- *"Your verbal explanation described a hash map but your code used nested loops"*
-
+Current tests validate:
+- Transcript cleaning behavior
+- Filler analysis behavior
+- Confidence scoring behavior
+- End-to-end output shape for the 3-step pipeline

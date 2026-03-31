@@ -20,18 +20,14 @@ import tempfile
 import textwrap
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
-from groq import Groq
 from dotenv import load_dotenv
+from groq_service import call_groq, get_model_name
 
 load_dotenv()
 
 app = Flask(__name__, static_folder="static")
-app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
+app.secret_key = os.getenv("SECRET_KEY")
 CORS(app, supports_credentials=True)
-
-# ── Groq client ───────────────────────────────────────────────────────────────
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-MODEL  = "llama-3.3-70b-versatile"   # free, fast — swap to mixtral-8x7b-32768 for more power
 
 # ── In-memory session store (replace with Redis in production) ────────────────
 sessions = {}
@@ -92,31 +88,6 @@ ALWAYS respond in this exact JSON format (no markdown, no extra text):
   "optimized_approach": "brief description of optimal solution",
   "interviewer_verdict": "hire"
 }"""
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────────────────────────────────────
-
-def call_groq(system_prompt, messages, temperature=0.7):
-    """Call Groq API and return parsed JSON."""
-    groq_messages = [{"role": "system", "content": system_prompt}]
-    groq_messages.extend(messages)
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=groq_messages,
-        temperature=temperature,
-        max_tokens=1024,
-        response_format={"type": "json_object"},
-    )
-    raw = response.choices[0].message.content
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        # Strip markdown fences if present
-        cleaned = re.sub(r"```json|```", "", raw).strip()
-        return json.loads(cleaned)
 
 
 def get_session(session_id):
@@ -301,11 +272,14 @@ def start_interview():
 
     try:
         resp = call_groq(INTERVIEW_SYSTEM_PROMPT, sess["messages"])
+        # start1 = time.perf_counter()
         sess["messages"].append({"role": "assistant", "content": json.dumps(resp)})
         sess["question_num"] = 1
         return jsonify({"session_id": session_id, "response": resp})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    # finally:
+    #     print((time.perf_counter() - start1) * 1000)
 
 
 @app.route("/api/interview/answer", methods=["POST"])
@@ -418,6 +392,6 @@ def static_files(path):
 
 if __name__ == "__main__":
     print("Starting AI Interview System...")
-    print(f"Using model: {MODEL}")
+    print(f"Using model: {get_model_name()}")
     print("Open http://localhost:5000 in your browser")
     app.run(debug=True, port=5000)

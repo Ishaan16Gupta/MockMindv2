@@ -269,6 +269,7 @@ def start_interview():
         + " Ask question 1 of 5."
     )
     sess["messages"].append({"role": "user", "content": init_content})
+    print(sess["messages"])
 
     try:
         resp = call_groq(INTERVIEW_SYSTEM_PROMPT, sess["messages"])
@@ -297,6 +298,7 @@ def submit_answer():
            else "Evaluate. This was the final question — set session_complete: true.")
     )
     sess["messages"].append({"role": "user", "content": content})
+    print(sess["messages"])
 
     try:
         resp = call_groq(INTERVIEW_SYSTEM_PROMPT, sess["messages"])

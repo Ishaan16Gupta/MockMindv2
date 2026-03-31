@@ -10,7 +10,7 @@ from scipy.io.wavfile import write
 # CONFIG
 # ==============================
 
-DEEPGRAM_API_KEY = os.environ.get("6b8bfb83f948ba8b960ca4b10421e7d1c7b22fbf")
+DEEPGRAM_API_KEY = "6b8bfb83f948ba8b960ca4b10421e7d1c7b22fbf"
 
 SAMPLE_RATE = 16000
 CHANNELS = 1

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deepgram Text to Speech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --surface: #fdfaf5;
+      --border: #e0d8cc;
+      --ink: #1a1510;
+      --muted: #8a7f72;
+      --accent: #c84b31;
+      --accent2: #2d6a4f;
+      --gold: #b5813a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 60px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 20px; left: 20px; right: 20px; bottom: 20px;
+      border: 1px solid rgba(26,21,16,0.08);
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 32px;
+      border-bottom: 2px solid var(--ink);
+      position: relative;
+    }
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 7vw, 4rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    header h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .subtitle {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .ornament {
+      display: block;
+      text-align: center;
+      color: var(--gold);
+      font-size: 18px;
+      letter-spacing: 0.4em;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-label {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--ink);
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      line-height: 1.7;
+      padding: 16px 18px;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); font-style: italic; }
+
+    .char-count {
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .select-wrap { position: relative; }
+    .select-wrap label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    select {
+      width: 100%;
+      appearance: none;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 10px 36px 10px 12px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: var(--accent); }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 12px;
+      bottom: 11px;
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 12px;
+    }
+
+    .speed-row { margin-top: 14px; }
+    .speed-row label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .speed-row label span { color: var(--accent); font-size: 11px; }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+
+    /* ── Timer ── */
+    .timer-box {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 12px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .timer-box.show { display: flex; }
+    .timer-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .timer-label { color: var(--ink); }
+    #timer-elapsed {
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      font-weight: 500;
+      min-width: 52px;
+    }
+    /* Last conversion time badge */
+    .last-time {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 10px 16px;
+      background: rgba(45,106,79,0.07);
+      border: 1px solid rgba(45,106,79,0.2);
+      border-radius: 3px;
+      font-size: 11px;
+      color: var(--accent2);
+    }
+    .last-time.show { display: flex; }
+    .last-time svg { flex-shrink: 0; }
+
+    .btn-synth {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-style: italic;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .btn-synth:hover { background: #a83a23; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,75,49,0.25); }
+    .btn-synth:active { transform: translateY(0); }
+    .btn-synth:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-synth .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn-synth.loading .spinner { display: block; }
+    .btn-synth.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .player-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px 28px;
+      margin-bottom: 18px;
+      display: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      animation: fadeUp 0.3s ease;
+    }
+    .player-card.show { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .player-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .play-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+      background: var(--ink);
+      color: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .play-btn:hover { background: var(--accent); border-color: var(--accent); }
+    .play-btn svg { width: 20px; height: 20px; }
+
+    .player-info { flex: 1; min-width: 0; }
+    .player-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .player-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .progress-wrap {
+      position: relative;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+      pointer-events: none;
+    }
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-download:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .error-box {
+      background: rgba(200,75,49,0.06);
+      border: 1px solid rgba(200,75,49,0.25);
+      border-radius: 3px;
+      padding: 14px 18px;
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="eyebrow">Deepgram API — Aura Engine</div>
+    <h1>Text to <em>Voice</em></h1>
+    <p class="subtitle">Transform written words into natural, expressive speech</p>
+    <span class="ornament">— ✦ —</span>
+  </header>
+
+  <!-- Text Input -->
+  <div class="card">
+    <div class="card-label">Text Input</div>
+    <textarea id="text-input" placeholder="Type or paste the text you'd like to convert to speech..." maxlength="2000" oninput="updateCount()"></textarea>
+    <div class="char-count"><span id="char-count">0</span> / 2000</div>
+  </div>
+
+  <!-- Voice Settings -->
+  <div class="card">
+    <div class="card-label">Voice Settings</div>
+    <div class="controls-grid">
+      <div class="select-wrap">
+        <label>Voice</label>
+        <select id="voice-select">
+          <optgroup label="Female">
+            <option value="aura-asteria-en">Asteria (Female)</option>
+            <option value="aura-luna-en">Luna (Female)</option>
+            <option value="aura-stella-en">Stella (Female)</option>
+            <option value="aura-athena-en">Athena (Female)</option>
+            <option value="aura-hera-en">Hera (Female)</option>
+          </optgroup>
+          <optgroup label="Male">
+            <option value="aura-orion-en">Orion (Male)</option>
+            <option value="aura-arcas-en">Arcas (Male)</option>
+            <option value="aura-perseus-en">Perseus (Male)</option>
+            <option value="aura-angus-en">Angus (Male)</option>
+            <option value="aura-helios-en">Helios (Male)</option>
+            <option value="aura-zeus-en">Zeus (Male)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <label>Audio Format</label>
+        <select id="format-select">
+          <option value="mp3">MP3</option>
+          <option value="wav">WAV</option>
+          <option value="ogg">OGG</option>
+          <option value="flac">FLAC</option>
+        </select>
+      </div>
+    </div>
+    <!-- Speed default lowered to 0.75 -->
+    <div class="speed-row">
+      <label>Speaking Rate <span id="speed-val">0.75×</span></label>
+      <input type="range" id="speed-range" min="0.5" max="2.0" step="0.05" value="0.75"
+             oninput="document.getElementById('speed-val').textContent = (+this.value).toFixed(2)+'×'"/>
+    </div>
+  </div>
+
+  <!-- Error box -->
+  <div class="error-box" id="error-box"></div>
+
+  <!-- Live conversion timer -->
+  <div class="timer-box" id="timer-box">
+    <div class="timer-dot"></div>
+    <span class="timer-label">Converting speech…</span>
+    <span id="timer-elapsed">0.00s</span>
+  </div>
+
+  <!-- Last conversion time -->
+  <div class="last-time" id="last-time">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+    <span id="last-time-text">Last conversion completed in —</span>
+  </div>
+
+  <!-- Synthesize Button -->
+  <button class="btn-synth" id="synth-btn" onclick="synthesize()">
+    <div class="spinner"></div>
+    <span class="btn-label">Synthesize Speech</span>
+  </button>
+
+  <!-- Player -->
+  <div class="player-card" id="player-card">
+    <div class="card-label">Audio Output</div>
+    <div class="player-top">
+      <button class="play-btn" id="play-btn" onclick="togglePlay()">
+        <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+      <div class="player-info">
+        <div class="player-title" id="player-title">Ready to play</div>
+        <div class="player-meta" id="player-meta">—</div>
+      </div>
+    </div>
+    <div class="progress-wrap" id="progress-wrap" onclick="seekAudio(event)">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="time-row">
+      <span id="time-current">0:00</span>
+      <span id="time-total">0:00</span>
+    </div>
+    <a class="btn-download" id="download-btn" href="#" download="speech.mp3">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download Audio
+    </a>
+  </div>
+
+  <footer>Powered by Deepgram Aura TTS · deepgram.com</footer>
+</div>
+
+<audio id="audio-player"></audio>
+
+<script>
+  // ── Backend API key — no need to enter it on the page ──
+  const DEEPGRAM_API_KEY = "fe66485a90ed1ba4eb58e7e2922bf4ecffd26de5";
+
+  let audioUrl = null;
+  const audio = document.getElementById('audio-player');
+
+  // ── Timer state ──
+  let timerInterval = null;
+  let timerStart = null;
+
+  function startTimer() {
+    timerStart = performance.now();
+    const box = document.getElementById('timer-box');
+    const el  = document.getElementById('timer-elapsed');
+    box.classList.add('show');
+    document.getElementById('last-time').classList.remove('show');
+    timerInterval = setInterval(() => {
+      const elapsed = ((performance.now() - timerStart) / 1000).toFixed(2);
+      el.textContent = elapsed + 's';
+    }, 50);
+  }
+
+  function stopTimer() {
+    if (!timerInterval) return;
+    clearInterval(timerInterval);
+    timerInterval = null;
+    const elapsed = ((performance.now() - timerStart) / 1000).toFixed(2);
+    document.getElementById('timer-box').classList.remove('show');
+    const lastBox = document.getElementById('last-time');
+    document.getElementById('last-time-text').textContent =
+      `Last conversion completed in ${elapsed}s`;
+    lastBox.classList.add('show');
+  }
+
+  function updateCount() {
+    const len = document.getElementById('text-input').value.length;
+    document.getElementById('char-count').textContent = len;
+  }
+
+  async function synthesize() {
+    hideError();
+    const text = document.getElementById('text-input').value.trim();
+    if (!text) { showError('Please enter some text to synthesize.'); return; }
+
+    const voice  = document.getElementById('voice-select').value;
+    const format = document.getElementById('format-select').value;
+    const speed  = parseFloat(document.getElementById('speed-range').value);
+
+    setLoading(true);
+    startTimer();
+
+    try {
+      const res = await fetch(
+        `https://api.deepgram.com/v1/speak?model=${voice}&encoding=${format}`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Token ${DEEPGRAM_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.err_msg || err.message || `HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      audioUrl = URL.createObjectURL(blob);
+      setupPlayer(audioUrl, text, voice, format, blob.size, speed);
+
+    } catch (err) {
+      showError('TTS failed: ' + err.message);
+    } finally {
+      stopTimer();
+      setLoading(false);
+    }
+  }
+
+  function setupPlayer(url, text, voice, format, size, speed) {
+    audio.src = url;
+    audio.playbackRate = speed;   // apply speaking rate on the audio element
+    audio.load();
+
+    const voiceName = document.getElementById('voice-select').selectedOptions[0].text;
+    const preview = text.length > 48 ? text.slice(0, 48) + '…' : text;
+    document.getElementById('player-title').textContent = preview;
+    document.getElementById('player-meta').textContent =
+      `${voiceName} · ${format.toUpperCase()} · ${(size / 1024).toFixed(1)} KB · ${speed.toFixed(2)}× speed`;
+
+    const dl = document.getElementById('download-btn');
+    dl.href = url;
+    dl.download = `speech_${voice}.${format}`;
+
+    document.getElementById('player-card').classList.add('show');
+
+    audio.ontimeupdate = updateProgress;
+    audio.onended = () => {
+      setPlayIcon(false);
+      document.getElementById('progress-fill').style.width = '0%';
+    };
+    audio.onloadedmetadata = () => {
+      document.getElementById('time-total').textContent = formatTime(audio.duration);
+    };
+    audio.play();
+    setPlayIcon(true);
+  }
+
+  function togglePlay() {
+    if (audio.paused) { audio.play(); setPlayIcon(true); }
+    else { audio.pause(); setPlayIcon(false); }
+  }
+
+  function setPlayIcon(playing) {
+    document.getElementById('play-icon').innerHTML = playing
+      ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+      : '<path d="M8 5v14l11-7z"/>';
+  }
+
+  function updateProgress() {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('time-current').textContent = formatTime(audio.currentTime);
+  }
+
+  function seekAudio(e) {
+    if (!audio.duration) return;
+    const rect = document.getElementById('progress-wrap').getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = pct * audio.duration;
+  }
+
+  function formatTime(s) {
+    if (isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  function setLoading(v) {
+    const btn = document.getElementById('synth-btn');
+    btn.disabled = v;
+    btn.classList.toggle('loading', v);
+  }
+  function showError(msg) {
+    const b = document.getElementById('error-box');
+    b.textContent = msg; b.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+</script>
+</body>
+</html>

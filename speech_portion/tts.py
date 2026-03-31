@@ -20,7 +20,7 @@ DEFAULT_VOICE  = "aura-asteria-en"
 DEFAULT_FORMAT = "mp3"
 
 # Playback speed multiplier (0.5 – 2.0); mirrors the HTML slider default of 0.75
-DEFAULT_SPEED  = 0.75
+DEFAULT_SPEED  = 1
 
 # Max characters accepted (mirrors HTML maxlength="2000")
 MAX_CHARS = 2000

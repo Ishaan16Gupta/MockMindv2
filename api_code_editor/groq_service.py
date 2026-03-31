@@ -12,6 +12,9 @@ import re
 from typing import Any
 
 from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
@@ -44,7 +47,7 @@ def _parse_json_content(raw: str) -> dict[str, Any]:
 
 
 def call_groq(
-    system_prompt: str ,
+    system_prompt: str,
     messages: list[dict[str, str]],
     temperature: float = 0.7,
     max_tokens: int = 1024,

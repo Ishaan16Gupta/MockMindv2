@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deepgram Speech to Text</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #1e1e2e;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --danger: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+    }
+
+    .recorder-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .mic-btn {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+
+    .mic-btn.recording {
+      border-color: var(--danger);
+    }
+
+    #status-text {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    #latency {
+      margin-top: 10px;
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .transcript-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    #transcript {
+      min-height: 120px;
+      font-size: 17px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+
+    .error-box {
+      color: var(--danger);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <header>
+    <h1>Speech to Text</h1>
+    <p>Using Deepgram API</p>
+  </header>
+
+  <div class="recorder-card">
+    <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">🎤</button>
+    <div id="status-text">Click mic to start recording</div>
+    <div id="latency"></div>
+  </div>
+
+  <div class="transcript-card">
+    <h3>Transcript</h3>
+    <div id="transcript"></div>
+    <div class="error-box" id="error-box"></div>
+  </div>
+</div>
+
+<script>
+  const DEEPGRAM_API_KEY = "6b8bfb83f948ba8b960ca4b10421e7d1c7b22fbf";
+
+  let mediaRecorder, audioChunks = [], isRecording = false;
+  let audioContext, analyser, microphone, dataArray;
+  let silenceStart = null;
+
+  let requestStartTime = null;
+
+  const SILENCE_THRESHOLD = 10;
+  const SILENCE_DURATION = 2000;
+
+  async function toggleRecording() {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      await startRecording();
+    }
+  }
+
+  async function startRecording() {
+    silenceStart = null;
+    requestStartTime = null;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        stream.getTracks().forEach(t => t.stop());
+        await transcribe(audioBlob);
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+
+      // Audio analysis
+      audioContext = new AudioContext();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(stream);
+
+      analyser.fftSize = 2048;
+      dataArray = new Uint8Array(analyser.fftSize);
+
+      microphone.connect(analyser);
+
+      detectSilence();
+
+      document.getElementById('status-text').textContent = "Listening...";
+      document.getElementById('mic-btn').classList.add('recording');
+      document.getElementById('latency').textContent = "";
+
+    } catch (err) {
+      showError("Mic error: " + err.message);
+    }
+  }
+
+  function detectSilence() {
+    if (!isRecording) return;
+
+    analyser.getByteTimeDomainData(dataArray);
+
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      const val = (dataArray[i] - 128) / 128;
+      sum += val * val;
+    }
+
+    const volume = Math.sqrt(sum / dataArray.length) * 100;
+
+    if (volume < SILENCE_THRESHOLD) {
+      if (!silenceStart) {
+        silenceStart = Date.now();
+      } else if (Date.now() - silenceStart > SILENCE_DURATION) {
+        stopRecording();
+        return;
+      }
+    } else {
+      silenceStart = null;
+    }
+
+    requestAnimationFrame(detectSilence);
+  }
+
+  function stopRecording() {
+    if (!mediaRecorder || !isRecording) return;
+
+    requestStartTime = Date.now(); // start latency timer
+
+    mediaRecorder.stop();
+    isRecording = false;
+
+    document.getElementById('status-text').textContent = "Processing...";
+    document.getElementById('mic-btn').classList.remove('recording');
+
+    if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+    analyser = null;
+    microphone = null;
+    }
+  }
+
+  async function transcribe(blob) {
+    try {
+      const res = await fetch(
+        "https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": "Token " + DEEPGRAM_API_KEY,
+            "Content-Type": blob.type
+          },
+          body: blob
+        }
+      );
+
+      const data = await res.json();
+      const text = data?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+
+      const latency = Date.now() - requestStartTime;
+
+      document.getElementById("transcript").textContent =
+        text || "No speech detected";
+
+      document.getElementById("status-text").textContent = "Done";
+
+      document.getElementById("latency").textContent =
+        `Latency: ${latency} ms (${(latency/1000).toFixed(2)} sec)`;
+
+    } catch (err) {
+      showError("Error: " + err.message);
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById("error-box").textContent = msg;
+  }
+</script>
+
+</body>
+</html>

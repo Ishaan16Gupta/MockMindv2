@@ -93,27 +93,11 @@ def print_scores(scores: list[float]):
 # INTERVIEW SETUP
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_interview_config() -> tuple[str, str, str]:
-    """Prompt the user for interview configuration via voice or CLI."""
-    print("\n" + "═" * 50)
-    print("  MockMind – AI Interview Session")
-    print("═" * 50)
-
-    mode = input("Interview mode (behavioral / technical) [behavioral]: ").strip() or "behavioral"
-    difficulty = input("Difficulty (Junior / Mid / Senior) [Mid]: ").strip() or "Mid"
-    use_resume = input("Paste resume text? (y/N): ").strip().lower()
-    resume = ""
-    if use_resume == "y":
-        resume = input("Resume (one line): ").strip()
-
-    return mode, difficulty, resume
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # API ENTRY POINT  (called by Flask routing.py)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def start_session(mode: str, difficulty: str, resume: str = "") -> dict:
+def start_session(role: str, company_type: str, mode: str, difficulty: str, resume: str = "") -> dict:
     """Start an interview session and return the first question + state.
 
     This is the programmatic entry point used by the Flask API route.
@@ -137,16 +121,18 @@ def start_session(mode: str, difficulty: str, resume: str = "") -> dict:
 
     init_content = (
         f"Start a {difficulty} {mode} interview.\n"
+        f"Target role: {role} at a {company_type} company.\n"
+        f"Tailor questions to what {company_type} companies typically ask {role} candidates.\n"
         f"Session plan: {TOTAL_QUESTIONS} questions total — "
         f"{cfg['resume_based']} resume-based, "
         f"{cfg['situational']} situational, "
         f"{cfg['technical']} technical.\n"
         f"Depth expectation: {cfg['depth']}.\n"
         f"Generate a follow-up if score is below {cfg['follow_up_threshold']}/10.\n"
-        + (f"Candidate resume: {resume[:600]}\n" if resume else "")
+        + (f"Candidate resume:\n{resume[:2000]}\n" if resume else "")
         + "Ask question 1."
     )
-    print(f"Init content: {init_content}\n") #ran
+    print(f"Init content: {init_content}\n")
 
     messages: list[dict] = [{"role": "user", "content": init_content}]
     resp = ask_groq(messages)
@@ -200,7 +186,7 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     evaluation    = resp.get("evaluation") or {}
     score         = evaluation.get("score")
     print(f"score: {score}")
-    should_follow = resp.get("should_follow_up") or (score is not None and score < 6)
+    should_follow = resp.get("should_follow_up") or (score is not None and score < cfg["follow_up_threshold"])
 
     if should_follow and not is_last and not resp.get("follow_up"):
         messages.append({
@@ -371,8 +357,8 @@ def run_interview(session_id: str, cfg: dict, messages: list[dict]):
 
 if __name__ == "__main__":
     # Standalone CLI mode: get config from terminal, then run
-    mode, difficulty, resume = get_interview_config()
-    session = start_session(mode, difficulty, resume)
+    role, company_type, mode, difficulty, resume = get_interview_config()
+    session = start_session(role, company_type, mode, difficulty, resume)
     run_interview(
         session_id="cli-session",
         cfg=session["cfg"],

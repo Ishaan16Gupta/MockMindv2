@@ -58,8 +58,6 @@ def get_interview_config() -> tuple[str, str, str]:
     mode = input("Interview mode (behavioral / technical) [behavioral]: ").strip() or "behavioral"
     difficulty = input("Difficulty (Junior / Mid / Senior) [Mid]: ").strip() or "Mid"
     use_resume = input("Paste resume text? (y/N): ").strip().lower()
-    cfg=INTERVIEW_CONFIG.get((mode,difficulty),INTERVIEW_CONFIG[("behavioral", "Mid")])
-    total_questions = cfg["total_questions"]
     resume = ""
     if use_resume == "y":
         resume = input("Resume (one line): ").strip()

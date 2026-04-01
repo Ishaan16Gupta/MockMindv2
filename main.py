@@ -7,6 +7,7 @@ import json
 import time
 
 import api_code_editor.groq_service as gq
+from api_code_editor.interview_config import INTERVIEW_CONFIG, get_interview_config
 from speech_portion.stt import listen
 from speech_portion.tts import speak
 
@@ -44,8 +45,6 @@ ALWAYS respond in this exact JSON format (no markdown, no extra text):
 }
 
 On the FIRST message set evaluation and transition to null. Keep questions sharp. Probe for depth."""
-
-TOTAL_QUESTIONS = 5
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
@@ -116,6 +115,8 @@ def get_interview_config() -> tuple[str, str, str]:
 
 def run_interview():
     mode, difficulty, resume = get_interview_config()
+    cfg = INTERVIEW_CONFIG.get((mode, difficulty), INTERVIEW_CONFIG[("behavioral", "Mid")])
+    TOTAL_QUESTIONS = cfg["total_questions"]
 
     messages: list[dict] = []
     scores: list[float] = []
@@ -123,9 +124,15 @@ def run_interview():
 
     # ── Start the session ────────────────────────────────────────────────────
     init_content = (
-        f"Start a {difficulty} {mode} interview."
-        + (f" Candidate resume: {resume[:600]}" if resume else "")
-        + f" Ask question {question_num} of {TOTAL_QUESTIONS}."
+        f"Start a {difficulty} {mode} interview.\n"
+        f"Session plan: {TOTAL_QUESTIONS} questions total — "
+        f"{cfg['resume_based']} resume-based, "
+        f"{cfg['situational']} situational, "
+        f"{cfg['technical']} technical.\n"
+        f"Depth expectation: {cfg['depth']}.\n"
+        f"Generate a follow-up if score is below {cfg['follow_up_threshold']}/10.\n"
+        + (f"Candidate resume: {resume[:600]}\n" if resume else "")
+        + "Ask question 1."
     )
     messages.append({"role": "user", "content": init_content})
 

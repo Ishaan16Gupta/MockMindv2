@@ -153,7 +153,7 @@ def analyse_complexity(code):
     elif has_sort:
         time_c = "O(n log n)"
     elif has_recursion:
-        time_c = "O(n)"
+        time_c = "O(2^n)"
     else:
         time_c = "O(n)"
 

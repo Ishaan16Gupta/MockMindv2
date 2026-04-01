@@ -123,20 +123,43 @@ except Exception as e:
 
 
 def analyse_complexity(code):
+    """AST-based complexity heuristics."""
     try:
         tree = ast.parse(code)
-    except:
+    except SyntaxError:
         return {"time": "Unknown", "space": "Unknown"}
 
-    loops = sum(isinstance(n, (ast.For, ast.While)) for n in ast.walk(tree))
+    # Loop depth
+    def max_loop_depth(node, depth=0):
+        if isinstance(node, (ast.For, ast.While)):
+            depth += 1
+        return max([depth] + [max_loop_depth(c, depth) for c in ast.iter_child_nodes(node)])
 
-    if loops == 0:
+    loop_depth = max_loop_depth(tree)
+    has_recursion = any(
+        code.count(node.name) > 1
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    )
+    has_sort = bool(re.search(r"\b(sorted|\.sort\b|heapq)", code))
+    allocs = sum(1 for n in ast.walk(tree) if isinstance(n, (ast.List, ast.Dict, ast.Set)))
+
+    if loop_depth == 0 and not has_recursion:
         time_c = "O(1)"
-    elif loops == 1:
+    elif loop_depth == 1 and not has_sort:
+        time_c = "O(n)"
+    elif loop_depth >= 2:
+        time_c = f"O(n^{loop_depth})"
+    elif has_sort:
+        time_c = "O(n log n)"
+    elif has_recursion:
         time_c = "O(n)"
     else:
-        time_c = "O(n²)"
+        time_c = "O(n)"
 
-    space_c = "O(n)" if "list" in code else "O(1)"
+    space_c = "O(1)" if allocs == 0 else "O(n)"
 
-    return {"time": time_c, "space": space_c}
+    return {
+        "time": time_c,
+        "space": space_c,
+    }

@@ -37,6 +37,11 @@ def report():
     return send_file("static/report.html")
 
 
+@app.route("/Camera_analyser/script.js")
+def camera_analyser_script():
+    return send_file("Camera_analyser/script.js", mimetype="application/javascript")
+
+
 # ── API ROUTES ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/interview/start", methods=["POST"])

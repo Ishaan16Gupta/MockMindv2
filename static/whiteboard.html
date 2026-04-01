@@ -299,12 +299,57 @@
     if (camStream) camStream.getVideoTracks().forEach(t => t.enabled = !camOff);
   }
 
+  // ── Camera Analyzer State ──────────────────────────────────────────────────
+  let cameraAnalyzer = null;
+  let violationStats = {
+    poseNotUpright: 0,
+    notLooking: 0,
+    faceNotCentered: 0,
+    total: 0,
+  };
+
   function startPostureCheck() {
-    setInterval(() => {
-      const ok = Math.random() > 0.25;
-      document.getElementById('p-dot').style.background = ok ? '#00b878' : '#f5a623';
-      document.getElementById('p-text').textContent = ok ? 'Posture good' : 'Sit up straight';
-    }, 4000);
+    // Initialize camera analyzer
+    const videoEl = document.getElementById('video-el');
+    
+    cameraAnalyzer = new CameraAnalyzer(videoEl, (data) => {
+      const { state, violations } = data;
+      violationStats = violations;
+      
+      // Update UI badge
+      const pDot = document.getElementById('p-dot');
+      const pText = document.getElementById('p-text');
+      
+      let statusText = '';
+      let statusColor = '#00b878'; // green
+      
+      if (!state.poseIsUpright) {
+        statusText = 'Sit up straight';
+        statusColor = '#f5a623'; // orange
+      } else if (!state.isLooking) {
+        statusText = 'Look at camera';
+        statusColor = '#f5a623';
+      } else if (!state.faceCentered) {
+        statusText = 'Center your face';
+        statusColor = '#f5a623';
+      } else {
+        statusText = 'Posture good';
+        statusColor = '#00b878';
+      }
+      
+      pDot.style.background = statusColor;
+      pText.textContent = statusText;
+      
+      // Log violations
+      console.log(`[POSE ANALYZER] Upright=${state.poseIsUpright}, Looking=${state.isLooking}, Centered=${state.faceCentered} | Total violations: ${violations.total}`);
+    });
+    
+    // Initialize analyzer
+    cameraAnalyzer.init().catch((error) => {
+      console.error('Failed to initialize camera analyzer:', error);
+      document.getElementById('p-text').textContent = 'Camera unavailable';
+      document.getElementById('p-dot').style.background = '#ff6b6b';
+    });
   }
 
   // ── TTS: speak text via server ─────────────────────────────────────────────
@@ -646,8 +691,11 @@
     clearInterval(timerInterval);
     camStream?.getTracks().forEach(t => t.stop());
     micStream?.getTracks().forEach(t => t.stop());
+    if (cameraAnalyzer) cameraAnalyzer.stop();
+    
     localStorage.setItem('mm_scores', JSON.stringify(scores));
     localStorage.setItem('mm_duration', elapsedSeconds);
+    localStorage.setItem('mm_violations', JSON.stringify(violationStats));
     window.location.href = '/report';
   }
 
@@ -660,6 +708,13 @@
     const el = document.getElementById('status-text');
     el.textContent = msg;
     el.className = 'status-text' + (cls ? ' ' + cls : '');
+  }
+
+  function displayViolationStats() {
+    if (!violationStats || violationStats.total === 0) return;
+    const msg = `Violations: Posture ${violationStats.poseNotUpright} | Looking ${violationStats.notLooking} | Centering ${violationStats.faceNotCentered} (Total: ${violationStats.total})`;
+    console.log(`[VIOLATIONS] ${msg}`);
+    return msg;
   }
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -706,5 +761,11 @@
     btn.innerHTML = '▶ Run Tests';
   }
   </script>
+
+  <!-- MediaPipe Scripts for Camera Analysis -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script defer src="/Camera_analyser/script.js"></script>
 </body>
 </html>

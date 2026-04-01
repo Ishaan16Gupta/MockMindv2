@@ -207,12 +207,14 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
         except (TypeError, ValueError):
             print(f"[warn] Non-numeric score from model: {raw_score!r}")
     print(f"score: {score}")
+    # Determine if we should ask a follow-up (only if not already asked one for this question)
     should_follow = (
         resp.get("should_follow_up") or 
         (score is not None and score < cfg["follow_up_threshold"])
     ) and not already_asked_followup
 
     if should_follow and not is_last and not resp.get("follow_up"):
+        # Generate follow-up for first time
         messages.append({
             "role": "user",
             "content": (
@@ -231,10 +233,9 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
         # Model already provided a follow-up; still mark this question as handled.
         session["follow_ups_asked"].add(question_num)
 
-    # After a follow-up has been answered (detected by: already_asked_followup + not should_follow),
-    # we need to ask for the next main question
-    elif already_asked_followup and not resp.get("should_follow_up") and not is_last:
-        print(f"\n[After follow-up for Q{question_num}: requesting next question]\n")
+    # ENFORCE: Once a follow-up has been answered, ALWAYS move to next question (no follow-ups to follow-ups)
+    elif already_asked_followup and not is_last:
+        print(f"\n[After follow-up for Q{question_num}: moving to next question]\n")
         messages.append({
             "role": "user",
             "content": f"Now ask question {question_num + 1} of {total}. Do NOT evaluate."
@@ -244,6 +245,9 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
         # Merge next question + transition into response
         resp["question"] = next_resp.get("question")
         resp["transition"] = next_resp.get("transition") or resp.get("transition")
+        # Clear the should_follow_up flag since we're moving to next question
+        resp["should_follow_up"] = False
+        resp["follow_up"] = None
 
     if is_last:
         resp["session_complete"] = True

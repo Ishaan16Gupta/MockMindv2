@@ -16,9 +16,6 @@
     html, body { height: 100%; overflow: hidden; }
     body { background: var(--ink); color: #e0ddd8; font-family: var(--font-sans); display: flex; flex-direction: column; }
 
-    /* GUARD: redirect if no session */
-    body.no-session { display: none; }
-
     /* HEADER */
     .header { height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--ink-2); border-bottom: 1px solid rgba(255,255,255,0.06); }
     .h-left { display: flex; align-items: center; gap: 14px; }
@@ -62,6 +59,7 @@
 
     /* RIGHT PANEL */
     .right-panel { display: flex; flex-direction: column; background: var(--ink-2); overflow: hidden; }
+
     /* Video */
     .video-wrap { position: relative; background: #000; flex-shrink: 0; }
     .video-el { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #0a0a0c; }
@@ -72,6 +70,9 @@
     .vc-btn { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); transition: all 0.18s; }
     .vc-btn:hover { background: rgba(255,255,255,0.25); }
     .vc-btn.muted { background: rgba(200,80,42,0.8); }
+    .vc-btn.recording { background: rgba(200,80,42,0.9); box-shadow: 0 0 0 3px rgba(200,80,42,0.35); animation: rec-pulse 1.2s ease-in-out infinite; }
+    @keyframes rec-pulse { 0%,100%{box-shadow:0 0 0 3px rgba(200,80,42,0.35)} 50%{box-shadow:0 0 0 8px rgba(200,80,42,0.1)} }
+
     /* Chat */
     .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .chat-header { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -89,14 +90,37 @@
     .t-dot:nth-child(2){animation:th 1.2s 0.2s infinite}
     .t-dot:nth-child(3){animation:th 1.2s 0.4s infinite}
     @keyframes th { 0%,80%,100%{transform:scale(0.6);opacity:.3} 40%{transform:scale(1);opacity:1} }
-    .chat-input { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
-    .input-row { display: flex; gap: 8px; align-items: flex-end; }
+
+    /* VOICE INPUT */
+    .voice-input-area { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+    .voice-row { display: flex; gap: 8px; align-items: flex-end; }
     .answer-ta { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; color: rgba(255,255,255,0.85); font-family: var(--font-sans); font-size: 13px; line-height: 1.5; resize: none; outline: none; transition: border-color 0.18s; max-height: 80px; }
     .answer-ta:focus { border-color: rgba(200,80,42,0.4); }
     .answer-ta::placeholder { color: rgba(255,255,255,0.2); }
+    .answer-ta:disabled { opacity: 0.5; }
+    .voice-btn { width: 36px; height: 36px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: rgba(255,255,255,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; transition: all 0.18s; }
+    .voice-btn:hover { background: rgba(255,255,255,0.14); }
+    .voice-btn.active { background: rgba(200,80,42,0.8); border-color: var(--accent); color: #fff; animation: rec-pulse 1.2s ease-in-out infinite; }
+    .voice-btn:disabled { opacity: 0.35; cursor: not-allowed; animation: none; }
     .send-btn { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; transition: all 0.18s; }
     .send-btn:hover { background: var(--accent-2); }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Status bar */
+    .status-bar { padding: 4px 12px 8px; flex-shrink: 0; }
+    .status-text { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.05em; min-height: 14px; transition: color 0.2s; }
+    .status-text.active { color: var(--accent-2); }
+    .status-text.ok { color: var(--green); }
+
+    /* Speaking indicator */
+    .speaking-badge { display: none; align-items: center; gap: 6px; padding: 3px 10px; background: rgba(0,184,120,0.15); border: 1px solid rgba(0,184,120,0.3); border-radius: 100px; font-family: var(--font-mono); font-size: 10px; color: var(--green); }
+    .speaking-badge.visible { display: flex; }
+    .s-bar { width: 3px; border-radius: 2px; background: var(--green); animation: sound 1s ease infinite; }
+    .s-bar:nth-child(1){height:8px;animation-delay:0s}
+    .s-bar:nth-child(2){height:14px;animation-delay:0.15s}
+    .s-bar:nth-child(3){height:10px;animation-delay:0.3s}
+    .s-bar:nth-child(4){height:6px;animation-delay:0.45s}
+    @keyframes sound { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
 
     @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
     .fade-in { animation: fadeIn 0.3s ease both; }
@@ -158,58 +182,79 @@
         <div class="video-overlay"></div>
         <div class="posture-badge"><div class="p-dot" id="p-dot"></div><span id="p-text">Checking…</span></div>
         <div class="vc-row">
-          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mic">🎤</button>
-          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Camera">📹</button>
+          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mute mic">🎤</button>
+          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Toggle camera">📹</button>
         </div>
       </div>
+
       <div class="chat-area">
         <div class="chat-header">
           <span class="chat-hdr-title">AI Interviewer</span>
-          <span class="q-badge" id="q-badge">Q 1 / 5</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="speaking-badge" id="speaking-badge">
+              <div class="s-bar"></div><div class="s-bar"></div><div class="s-bar"></div><div class="s-bar"></div>
+              Speaking
+            </div>
+            <span class="q-badge" id="q-badge">Q 1 / 5</span>
+          </div>
         </div>
+
         <div class="messages" id="messages"></div>
-        <div class="chat-input">
-          <div class="input-row">
-            <textarea class="answer-ta" id="answer-ta" rows="2" placeholder="Type your answer… (Enter to send)"></textarea>
+
+        <div class="voice-input-area">
+          <div class="voice-row">
+            <textarea class="answer-ta" id="answer-ta" rows="2" placeholder="Type your answer, or click 🎙 to speak…"></textarea>
+            <button class="voice-btn" id="voice-btn" onclick="toggleVoiceInput()" title="Hold to speak">🎙</button>
             <button class="send-btn" id="send-btn" onclick="sendAnswer()">↑</button>
           </div>
+        </div>
+        <div class="status-bar">
+          <div class="status-text" id="status-text"></div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-  // ── Read state from localStorage ──────────────────────────────────────────
-  const sessionId = localStorage.getItem('mm_session_id');
+  // ── Session State ──────────────────────────────────────────────────────────
+  const sessionId    = localStorage.getItem('mm_session_id');
   const firstQuestion = localStorage.getItem('mm_first_question');
-  const config = JSON.parse(localStorage.getItem('mm_config') || '{}');
+  const config       = JSON.parse(localStorage.getItem('mm_config') || '{}');
 
-  if (!sessionId || !firstQuestion) {
-    console.warn("No session found, using fallback question");
-  }
-
-  let questionNum = 1;
-  let scores = [];
+  let questionNum    = 1;
+  let totalQuestions = 5;
+  let scores         = [];
   let elapsedSeconds = 0;
-  let timerInterval = null;
-  let stream = null;
-  let micMuted = false;
-  let camOff = false;
+  let timerInterval  = null;
+  let camStream      = null;
+  let micMuted       = false;
+  let camOff         = false;
 
-  // ── IMPORTANT: DEFINE ta FIRST ─────────────────────────────────────────────
-  const ta = document.getElementById('code-ta');
+  // Voice recording state
+  let mediaRecorder  = null;
+  let audioChunks    = [];
+  let isRecording    = false;
+  let micStream      = null;  // dedicated stream for STT (separate from camera stream)
 
-  // ── Init ──────────────────────────────────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────────────────────────
   document.getElementById('session-info').textContent = config.label || 'Interview Session';
 
+  const ta = document.getElementById('code-ta');
   ta.value = 'def solution():\n    # Write your solution here\n    pass\n';
   updateLineNums();
 
-  addAIMessage(firstQuestion || "Explain the Two Sum problem.", 1);
   startTimer();
   initCamera();
 
-  // ── Timer ─────────────────────────────────────────────────────────────────
+  // Display first question and speak it
+  if (firstQuestion) {
+    addAIMessage(firstQuestion, 1);
+    speakText(firstQuestion);
+  } else {
+    setStatus('No session found — go back to the landing page.', '');
+  }
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
   function startTimer() {
     timerInterval = setInterval(() => {
       elapsedSeconds++;
@@ -219,11 +264,11 @@
     }, 1000);
   }
 
-  // ── Camera ────────────────────────────────────────────────────────────────
+  // ── Camera ─────────────────────────────────────────────────────────────────
   async function initCamera() {
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('video-el').srcObject = stream;
+      camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      document.getElementById('video-el').srcObject = camStream;
       startPostureCheck();
     } catch(e) {
       document.getElementById('p-text').textContent = 'Camera off';
@@ -236,13 +281,12 @@
     const btn = document.getElementById('mic-btn');
     btn.textContent = micMuted ? '🔇' : '🎤';
     btn.classList.toggle('muted', micMuted);
-    if (stream) stream.getAudioTracks().forEach(t => t.enabled = !micMuted);
   }
 
   function toggleCam() {
     camOff = !camOff;
     document.getElementById('cam-btn').textContent = camOff ? '📷' : '📹';
-    if (stream) stream.getVideoTracks().forEach(t => t.enabled = !camOff);
+    if (camStream) camStream.getVideoTracks().forEach(t => t.enabled = !camOff);
   }
 
   function startPostureCheck() {
@@ -253,7 +297,172 @@
     }, 4000);
   }
 
-  // ── Chat ──────────────────────────────────────────────────────────────────
+  // ── TTS: speak text via server ─────────────────────────────────────────────
+  async function speakText(text) {
+    if (!text) return;
+    setSpeaking(true);
+    setStatus('Speaking…', 'active');
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) throw new Error('TTS failed');
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+
+      await new Promise((resolve, reject) => {
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = reject;
+        audio.play().catch(reject);
+      });
+    } catch(e) {
+      console.warn('TTS error:', e);
+    } finally {
+      setSpeaking(false);
+      setStatus('Your turn — speak or type your answer', 'ok');
+      // Auto-start recording after AI finishes speaking
+      if (!micMuted) startVoiceRecording();
+    }
+  }
+
+  // ── STT: auto-record with silence detection → auto-submit ─────────────────
+  // Mirrors stt.py: SILENCE_THRESHOLD=0.01, SILENCE_DURATION=2s, MAX_DURATION=20s
+  const SILENCE_THRESHOLD = 0.01;
+  const SILENCE_DURATION  = 2000;   // ms
+  const MAX_DURATION      = 20000;  // ms
+
+  let silenceTimer    = null;
+  let maxDurTimer     = null;
+  let audioCtx        = null;
+  let analyserNode    = null;
+  let silenceWatcher  = null;
+
+  async function toggleVoiceInput() {
+    if (isRecording) {
+      stopVoiceRecording();
+    } else {
+      startVoiceRecording();
+    }
+  }
+
+  async function startVoiceRecording() {
+    if (isRecording) return;
+
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch(e) {
+      setStatus('Microphone access denied', '');
+      return;
+    }
+
+    // ── MediaRecorder setup ──────────────────────────────────────────────────
+    audioChunks = [];
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    mediaRecorder = mimeType
+      ? new MediaRecorder(micStream, { mimeType })
+      : new MediaRecorder(micStream);
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = processRecording;
+    mediaRecorder.start(250);
+
+    // ── Web Audio silence detector (mirrors stt.py logic) ───────────────────
+    audioCtx     = new (window.AudioContext || window.webkitAudioContext)();
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 512;
+    const src = audioCtx.createMediaStreamSource(micStream);
+    src.connect(analyserNode);
+    const buf = new Float32Array(analyserNode.fftSize);
+
+    let silenceStart = null;
+    silenceWatcher = setInterval(() => {
+      analyserNode.getFloatTimeDomainData(buf);
+      // RMS amplitude — same formula as np.linalg.norm / len in stt.py
+      const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+
+      if (rms < SILENCE_THRESHOLD) {
+        if (silenceStart === null) silenceStart = Date.now();
+        else if (Date.now() - silenceStart >= SILENCE_DURATION) {
+          setStatus('Silence detected — processing…', 'active');
+          stopVoiceRecording();
+        }
+      } else {
+        silenceStart = null;
+      }
+    }, 100);
+
+    // Safety max-duration limit
+    maxDurTimer = setTimeout(() => {
+      if (isRecording) {
+        setStatus('Max duration reached — processing…', 'active');
+        stopVoiceRecording();
+      }
+    }, MAX_DURATION);
+
+    isRecording = true;
+    document.getElementById('voice-btn').classList.add('active');
+    document.getElementById('voice-btn').textContent = '⏹';
+    setStatus('Listening… (will auto-submit on silence)', 'active');
+  }
+
+  function stopVoiceRecording() {
+    if (!isRecording || !mediaRecorder) return;
+
+    clearInterval(silenceWatcher);
+    clearTimeout(maxDurTimer);
+    audioCtx?.close();
+    silenceWatcher = null;
+    audioCtx       = null;
+
+    mediaRecorder.stop();
+    micStream?.getTracks().forEach(t => t.stop());
+    isRecording = false;
+
+    document.getElementById('voice-btn').classList.remove('active');
+    document.getElementById('voice-btn').textContent = '🎙';
+    setStatus('Processing speech…', 'active');
+  }
+
+  async function processRecording() {
+    if (audioChunks.length === 0) { setStatus('', ''); return; }
+
+    const mimeType   = mediaRecorder?.mimeType || 'audio/webm';
+    const blob       = new Blob(audioChunks, { type: mimeType });
+
+    try {
+      const res        = await fetch('/api/stt', {
+        method:  'POST',
+        headers: { 'Content-Type': mimeType },
+        body:    blob,
+      });
+      const data       = await res.json();
+      const transcript = data.transcript || '';
+
+      if (transcript) {
+        // Show transcript briefly in the input, then auto-submit
+        document.getElementById('answer-ta').value = transcript;
+        setStatus(`Heard: "${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"`, 'ok');
+        // Small delay so the user can see what was captured
+        await new Promise(r => setTimeout(r, 600));
+        sendAnswer(transcript);
+      } else {
+        setStatus('No speech detected — speak again or type your answer', '');
+        // Re-start listening so the user doesn\'t have to click
+        if (!micMuted) startVoiceRecording();
+      }
+    } catch(e) {
+      setStatus('STT error — type your answer manually', '');
+    }
+  }
+
+  // ── Chat ───────────────────────────────────────────────────────────────────
   function addAIMessage(text, num) {
     const c = document.getElementById('messages');
     const d = document.createElement('div');
@@ -281,33 +490,44 @@
     scrollMessages();
   }
 
-  function removeThinking() {
-    document.getElementById('thinking')?.remove();
-  }
+  function removeThinking() { document.getElementById('thinking')?.remove(); }
 
   function scrollMessages() {
     const c = document.getElementById('messages');
     c.scrollTop = c.scrollHeight;
   }
 
-  async function sendAnswer() {
-    const taInput = document.getElementById('answer-ta');
-    const answer = taInput.value.trim();
+  // ── Send Answer ────────────────────────────────────────────────────────────
+  // `directAnswer` is passed by processRecording (voice path);
+  // when undefined, the text is read from the textarea (keyboard path).
+  async function sendAnswer(directAnswer) {
+    // Stop any active recording first
+    if (isRecording) stopVoiceRecording();
+
+    const taEl   = document.getElementById('answer-ta');
+    const answer = directAnswer !== undefined ? directAnswer : taEl.value.trim();
     if (!answer) return;
 
-    const sendBtn = document.getElementById('send-btn');
-    sendBtn.disabled = true;
-    taInput.disabled = true;
+    const sendBtn  = document.getElementById('send-btn');
+    const voiceBtn = document.getElementById('voice-btn');
+    sendBtn.disabled  = true;
+    voiceBtn.disabled = true;
+    taEl.disabled     = true;
 
     addUserMessage(answer);
-    taInput.value = '';
+    taEl.value = '';
     showThinking();
+    setStatus('Evaluating your answer…', 'active');
 
     try {
       const res = await fetch('/api/interview/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, answer, question_num: questionNum }),
+        body: JSON.stringify({
+          session_id:   sessionId,
+          answer,
+          question_num: questionNum,
+        }),
       });
 
       const data = await res.json();
@@ -317,27 +537,58 @@
 
       const resp = data.response;
 
+      // Collect score
       if (resp.evaluation?.score != null) scores.push(resp.evaluation.score);
 
-      questionNum++;
-      document.getElementById('q-badge').textContent = `Q ${Math.min(questionNum, 5)} / 5`;
+      // If follow-up needed, speak and display it (recording restarts after TTS)
+      if (resp.should_follow_up && resp.follow_up && !resp.session_complete) {
+        addAIMessage(resp.follow_up, questionNum);
+        await speakText(resp.follow_up);
+        // Don't increment questionNum for follow-ups
+        return;
+      }
 
-      if (resp.session_complete || questionNum > 5) {
+      questionNum++;
+      const displayQ = Math.min(questionNum, totalQuestions);
+      document.getElementById('q-badge').textContent = `Q ${displayQ} / ${totalQuestions}`;
+
+      if (resp.session_complete || questionNum > totalQuestions) {
+        // Speak closing line then redirect
+        const closing = resp.transition || "That concludes our interview. Thank you for your time!";
+        addAIMessage(closing, questionNum - 1);
+        await speakText(closing);
         goToReport();
-      } else if (resp.question) {
+        return;
+      }
+
+      // Speak transition if present
+      if (resp.transition) {
+        const transDiv = document.createElement('div');
+        transDiv.className = 'fade-in';
+        transDiv.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:4px;letter-spacing:.06em;">Interviewer</div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:6px 10px;border-left:2px solid rgba(255,255,255,0.08);">${esc(resp.transition)}</div>`;
+        document.getElementById('messages').appendChild(transDiv);
+        scrollMessages();
+        await speakText(resp.transition);
+      }
+
+      // Display & speak next question (speakText auto-restarts recording when done)
+      if (resp.question) {
         addAIMessage(resp.question, questionNum);
+        await speakText(resp.question);
       }
 
     } catch(e) {
       removeThinking();
+      setStatus('Connection error — is the server running?', '');
       addAIMessage('⚠ Connection error — is the server running?', questionNum);
     } finally {
-      sendBtn.disabled = false;
-      taInput.disabled = false;
-      taInput.focus();
+      sendBtn.disabled  = false;
+      voiceBtn.disabled = false;
+      taEl.disabled     = false;
     }
   }
 
+  // Enter to send (Shift+Enter for newline)
   document.getElementById('answer-ta').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -345,22 +596,33 @@
     }
   });
 
+  // ── End / Report ───────────────────────────────────────────────────────────
   function confirmEnd() {
     if (confirm('End this interview session?')) goToReport();
   }
 
   function goToReport() {
     clearInterval(timerInterval);
-    if (stream) stream.getTracks().forEach(t => t.stop());
-
+    camStream?.getTracks().forEach(t => t.stop());
+    micStream?.getTracks().forEach(t => t.stop());
     localStorage.setItem('mm_scores', JSON.stringify(scores));
     localStorage.setItem('mm_duration', elapsedSeconds);
-   window.location.href = '/report';
+    window.location.href = '/report';
   }
 
-  // ── Editor ────────────────────────────────────────────────────────────────
-  ta.addEventListener('input', updateLineNums);
+  // ── UI helpers ─────────────────────────────────────────────────────────────
+  function setSpeaking(on) {
+    document.getElementById('speaking-badge').classList.toggle('visible', on);
+  }
 
+  function setStatus(msg, cls) {
+    const el = document.getElementById('status-text');
+    el.textContent = msg;
+    el.className = 'status-text' + (cls ? ' ' + cls : '');
+  }
+
+  // ── Editor ─────────────────────────────────────────────────────────────────
+  ta.addEventListener('input', updateLineNums);
   ta.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -373,8 +635,7 @@
 
   function updateLineNums() {
     const lines = ta.value.split('\n');
-    document.getElementById('line-nums').innerHTML =
-      lines.map((_, i) => i + 1).join('<br>');
+    document.getElementById('line-nums').innerHTML = lines.map((_, i) => i + 1).join('<br>');
   }
 
   function resetCode() {
@@ -389,6 +650,20 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
-</script>
+
+  function switchTab(btn, tab) {
+    document.querySelectorAll('.etab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  async function runCode() {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Running…';
+    await new Promise(r => setTimeout(r, 1500));
+    btn.disabled = false;
+    btn.innerHTML = '▶ Run Tests';
+  }
+  </script>
 </body>
 </html>

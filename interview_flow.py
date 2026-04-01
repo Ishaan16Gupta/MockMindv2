@@ -162,6 +162,68 @@ def start_session(mode: str, difficulty: str, resume: str = "") -> dict:
     }
 
 
+def process_answer(session: dict, answer: str, question_num: int) -> dict:
+    """Evaluate a candidate's answer and return the next interviewer response.
+
+    This is the programmatic entry point used by POST /api/interview/answer.
+    It handles the full evaluation → optional follow-up generation → next
+    question flow, keeping routing.py simple.
+
+    Args:
+        session:      the session dict stored in SESSIONS (mutated in-place)
+        answer:       the candidate's answer text
+        question_num: 1-based index of the question being answered
+
+    Returns:
+        The Groq response dict, enriched with:
+          - follow_up populated if LLM omitted it but a follow-up is needed
+          - session_complete = True when this was the last question
+    """
+    messages       = session["messages"]
+    cfg            = session["cfg"]
+    total          = cfg["total_questions"]
+    is_last        = question_num >= total
+
+    content = (
+        f'Candidate answer: "{answer}"\n\n'
+        + (
+            "Evaluate the answer. If it is weak, incomplete, or incorrect, ask a follow-up question."
+            if not is_last
+            else "Evaluate. This was the final question. Set session_complete to true."
+        )
+    )
+    messages.append({"role": "user", "content": content})
+    resp = ask_groq(messages)
+    messages.append({"role": "assistant", "content": json.dumps(resp)})
+
+    # Follow-up: trigger if LLM flagged it OR score is low
+    evaluation    = resp.get("evaluation") or {}
+    score         = evaluation.get("score")
+    print(f"score: {score}")
+    should_follow = resp.get("should_follow_up") or (score is not None and score < 6)
+
+    if should_follow and not is_last and not resp.get("follow_up"):
+        messages.append({
+            "role": "user",
+            "content": (
+                f'The candidate gave a weak answer: "{answer}". '
+                "Ask a single targeted follow-up question to probe deeper. "
+                "Respond in the same JSON format. Set evaluation to null."
+            ),
+        })
+        print("\n Asking follow up question \n")
+        fu_resp = ask_groq(messages)
+        messages.append({"role": "assistant", "content": json.dumps(fu_resp)})
+        resp["follow_up"]      = fu_resp.get("follow_up") or fu_resp.get("question")
+        resp["should_follow_up"] = True
+
+    if is_last:
+        resp["session_complete"] = True
+
+    session["question_num"] = question_num + 1
+    return resp
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN LOOP
 # ─────────────────────────────────────────────────────────────────────────────

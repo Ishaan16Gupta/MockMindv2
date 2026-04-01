@@ -125,3 +125,52 @@ def transcribe(audio):
     print(f"⚡ STT Latency: {latency:.2f} ms")
 
     return text
+
+
+# ==============================
+# BYTES ENTRY POINT  (called by Flask /api/stt)
+# ==============================
+
+def transcribe_from_bytes(audio_bytes: bytes, content_type: str = "audio/webm") -> str:
+    """Accept raw audio bytes (from a browser MediaRecorder blob), write to a
+    temp file with the correct extension, and return the Deepgram transcript.
+
+    This is the programmatic entry point used by the Flask route so that
+    routing.py stays simple.
+
+    Args:
+        audio_bytes:  raw audio blob from the browser
+        content_type: MIME type, e.g. 'audio/webm' or 'audio/wav'
+
+    Returns:
+        Transcript string, or empty string if nothing was heard.
+    """
+    import tempfile
+
+    ext = ".webm" if "webm" in content_type else ".wav"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+
+    try:
+        url = f"https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true"
+        headers = {
+            "Authorization": f"Token {DEEPGRAM_API_KEY}",
+            "Content-Type": content_type,
+        }
+        start_time = time.time()
+        with open(tmp_path, "rb") as f:
+            response = requests.post(url, headers=headers, data=f)
+        latency = (time.time() - start_time) * 1000
+
+        try:
+            data = response.json()
+            text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
+        except Exception:
+            text = ""
+
+        print(f"📝 Transcript: {text if text else '[No speech detected]'}")
+        print(f"⚡ STT Latency: {latency:.2f} ms")
+        return text
+    finally:
+        os.remove(tmp_path)

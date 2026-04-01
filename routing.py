@@ -31,7 +31,7 @@ def report():
 def start_interview():
     data = request.get_json() or {}
     try:
-        session = main.start_session(
+        session = interview_flow.start_session(
             mode       = data.get("mode", "behavioral"),
             difficulty = data.get("difficulty", "Mid"),
             resume     = data.get("resume", ""),
@@ -75,7 +75,7 @@ def interview_answer():
         return jsonify({"error": "Empty answer"}), 400
 
     try:
-        resp = main.process_answer(
+        resp = interview_flow.process_answer(
             session      = SESSIONS[session_id],
             answer       = answer,
             question_num = data.get("question_num", 1),

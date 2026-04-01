@@ -11,6 +11,10 @@ from api_code_editor.interview_config import INTERVIEW_CONFIG, get_interview_con
 from speech_portion.stt import listen
 from speech_portion.tts import speak
 
+import sys
+sys.path.append('nlp_confidence_checker')
+from nlp_analysis import analyze
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SYSTEM PROMPT  (mirrors app.py's INTERVIEW_SYSTEM_PROMPT)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -148,10 +152,11 @@ def start_session(role: str, company_type: str, mode: str, difficulty: str, resu
         "cfg": cfg,
         "total_questions": TOTAL_QUESTIONS,
         "question_num": 1,
+        "transcripts": [],
     }
 
 
-def process_answer(session: dict, answer: str, question_num: int) -> dict:
+def process_answer(session: dict, answer: str, question_num: int, camera_confidence: float = None) -> dict:
     """Evaluate a candidate's answer and return the next interviewer response.
 
     This is the programmatic entry point used by POST /api/interview/answer.
@@ -180,6 +185,10 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     # Initialize tracking dict if not present
     if "follow_ups_asked" not in session:
         session["follow_ups_asked"] = set()
+    if "transcripts" not in session:
+        session["transcripts"] = []
+    if "camera_confidences" not in session:
+        session["camera_confidences"] = []
 
     # Check if we've already asked a follow-up for THIS question
     already_asked_followup = question_num in session["follow_ups_asked"]
@@ -195,6 +204,11 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     messages.append({"role": "user", "content": content})
     resp = ask_groq(messages)
     messages.append({"role": "assistant", "content": json.dumps(resp)})
+
+    # Append the answer to transcripts
+    session["transcripts"].append(answer)
+    if camera_confidence is not None:
+        session["camera_confidences"].append(camera_confidence)
 
     # Follow-up: trigger if LLM flagged it OR score is low
     # BUT ONLY if we haven't already asked a follow-up for this question
@@ -251,6 +265,17 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
 
     if is_last:
         resp["session_complete"] = True
+        # Run NLP analysis on combined transcripts
+        combined_transcript = " ".join(session["transcripts"])
+        nlp_result = analyze(combined_transcript)
+        # Add camera confidence average
+        camera_scores = session["camera_confidences"]
+        if camera_scores:
+            avg_camera = sum(camera_scores) / len(camera_scores)
+            nlp_result["camera_confidence"] = avg_camera
+        else:
+            nlp_result["camera_confidence"] = None
+        resp["nlp_report"] = nlp_result
 
     session["question_num"] = question_num + 1
     return resp

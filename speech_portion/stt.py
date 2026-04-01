@@ -15,9 +15,9 @@ DEEPGRAM_API_KEY = "6b8bfb83f948ba8b960ca4b10421e7d1c7b22fbf"
 SAMPLE_RATE = 16000
 CHANNELS = 1
 
-SILENCE_THRESHOLD = 0.01   # sensitivity (lower = more sensitive)
-SILENCE_DURATION = 2     # seconds of silence before stopping
-MAX_DURATION = 20          # max recording time (safety)
+SILENCE_THRESHOLD = 0.005   # sensitivity (lower = more sensitive)
+SILENCE_DURATION = 1.4      # seconds of silence before stopping
+MAX_DURATION = 20           # max recording time (safety)
 
 # Mic-level debug output
 MIC_LEVEL_DEBUG = True
@@ -29,6 +29,11 @@ MIC_LEVEL_PRINT_EVERY = 0.2  # seconds
 
 def listen():
     print("🎤 Listening... (speak now)")
+    print("🔧 sounddevice default input:", sd.default.device)
+    print("🖥️ available devices:")
+    for i, dev in enumerate(sd.query_devices()):
+        if "input" in dev["name"].lower() or dev["max_input_channels"] > 0:
+            print(f"  [{i}] {dev['name']} chans={dev['max_input_channels']}" )
 
     audio_buffer = []
     silence_start = None
@@ -81,8 +86,16 @@ def listen():
                 print("⏱️ Max duration reached, stopping...")
                 break
 
+    if len(audio_buffer) == 0:
+        print("⚠️ no audio frames captured, likely mic issue")
+        return ""
+
     # Combine audio chunks
     audio = np.concatenate(audio_buffer, axis=0)
+
+    # If audio contains very low energy, still send it to Deepgram for best guess
+    max_val = np.max(np.abs(audio)) if audio.size > 0 else 0
+    print(f"🔊 captured audio max amplitude={max_val:.6f}")
 
     return transcribe(audio)
 
@@ -117,9 +130,20 @@ def transcribe(audio):
 
     try:
         data = response.json()
+        print("🧾 Deepgram results:", data.get("results"))
         text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
-    except:
+        confidence = data["results"]["channels"][0]["alternatives"][0].get("confidence")
+        print(f"   transcript confidence: {confidence}")
+    except Exception as e:
+        print(f"❌ Deepgram JSON error: {e}")
+        print("   response status", response.status_code)
+        print("   response text", response.text)
         text = ""
+
+    if not text or text.strip() == "":
+        # if nothing is detected, dump additional fields if available for debugging
+        if data and "channels" in data.get("results", {}).get("channels", [{}])[0]:
+            print("   Deepgram channels detail:", data.get("results", {}).get("channels"))
 
     print(f"📝 Transcript: {text if text else '[No speech detected]'}")
     print(f"⚡ STT Latency: {latency:.2f} ms")

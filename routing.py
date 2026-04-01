@@ -98,6 +98,7 @@ def interview_answer():
     data       = request.get_json() or {}
     session_id = data.get("session_id")
     answer     = data.get("answer", "").strip()
+    camera_confidence = data.get("camera_confidence", None)
     try:
         question_num = int(data.get("question_num", 1))
     except (TypeError, ValueError):
@@ -113,6 +114,7 @@ def interview_answer():
             session      = SESSIONS[session_id],
             answer       = answer,
             question_num = question_num,
+            camera_confidence = camera_confidence,
         )
         resp = _json_safe(resp)
     except Exception as e:

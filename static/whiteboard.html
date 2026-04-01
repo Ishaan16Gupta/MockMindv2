@@ -396,10 +396,10 @@
   }
 
   // ── STT: auto-record with silence detection → auto-submit ─────────────────
-  // Mirrors stt.py: SILENCE_THRESHOLD=0.01, SILENCE_DURATION=2s, MAX_DURATION=20s
-  const SILENCE_THRESHOLD = 0.01;
-  const SILENCE_DURATION  = 2000;   // ms
-  const MAX_DURATION      = 20000;  // ms
+  // Mirrors stt.py: raised sensitivity to better capture quiet input
+  const SILENCE_THRESHOLD = 0.002;
+  const SILENCE_DURATION  = 1500;   // ms
+  const MAX_DURATION      = 22000;  // ms
 
   let silenceTimer    = null;
   let maxDurTimer     = null;
@@ -451,6 +451,8 @@
       // RMS amplitude — same formula as np.linalg.norm / len in stt.py
       const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
 
+      console.debug(`🎙 RMS=${rms.toFixed(6)} thr=${SILENCE_THRESHOLD}`);
+      console.debug(`🎙 RMS=${rms.toFixed(6)} thr=${SILENCE_THRESHOLD}`);
       if (rms < SILENCE_THRESHOLD) {
         if (silenceStart === null) silenceStart = Date.now();
         else if (Date.now() - silenceStart >= SILENCE_DURATION) {

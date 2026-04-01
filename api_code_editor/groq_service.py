@@ -14,7 +14,7 @@ from typing import Any
 from groq import Groq
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
@@ -26,6 +26,7 @@ def _get_client() -> Groq:
     global _client
     if _client is None:
         api_key = os.getenv("GROQ_API_KEY")
+        print(api_key)
         if not api_key:
             raise RuntimeError("GROQ_API_KEY is not set")
         _client = Groq(api_key=api_key)

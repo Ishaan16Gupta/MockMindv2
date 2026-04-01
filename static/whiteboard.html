@@ -221,8 +221,9 @@
   const firstQuestion = localStorage.getItem('mm_first_question');
   const config       = JSON.parse(localStorage.getItem('mm_config') || '{}');
 
+  // ── Initialize Interview ──────────────────────────────────────────
   let questionNum    = 1;
-  let totalQuestions = 5;
+  let totalQuestions = 5;  // Will be updated from server on start
   let scores         = [];
   let elapsedSeconds = 0;
   let timerInterval  = null;
@@ -245,6 +246,15 @@
 
   startTimer();
   initCamera();
+
+  // Retrieve total_questions from localStorage if available (from earlier fetch)
+  // Otherwise it was hardcoded to 5 above
+  const storedTotal = localStorage.getItem('mm_total_questions');
+  if (storedTotal) {
+    totalQuestions = parseInt(storedTotal);
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+    console.log(`[${timestamp}] ℹ️ [SETUP] Total questions fetched from server: ${totalQuestions}`);
+  }
 
   // Display first question and speak it
   if (firstQuestion) {
@@ -300,6 +310,9 @@
   // ── TTS: speak text via server ─────────────────────────────────────────────
   async function speakText(text) {
     if (!text) return;
+    const safeText = String(text);
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+    console.log(`[${timestamp}] 🎙 [MODEL SPEAKING] TTS request: ${safeText.substring(0, 80)}${safeText.length > 80 ? '...' : ''}`);
     setSpeaking(true);
     setStatus('Speaking…', 'active');
 
@@ -307,7 +320,7 @@
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: safeText }),
       });
 
       if (!res.ok) throw new Error('TTS failed');
@@ -315,14 +328,20 @@
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
+      console.log(`[${timestamp}] ✓ Audio blob created (${blob.size} bytes), preparing playback`);
 
       await new Promise((resolve, reject) => {
-        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onplay = () => console.log(`[${timestamp}] ▶ Audio playback started`);
+        audio.onended = () => { 
+          console.log(`[${timestamp}] ✓ Audio playback finished`);
+          URL.revokeObjectURL(url); 
+          resolve(); 
+        };
         audio.onerror = reject;
         audio.play().catch(reject);
       });
     } catch(e) {
-      console.warn('TTS error:', e);
+      console.warn(`[${timestamp}] ✗ TTS error:`, e);
     } finally {
       setSpeaking(false);
       setStatus('Your turn — speak or type your answer', 'ok');
@@ -508,6 +527,9 @@
     const answer = directAnswer !== undefined ? directAnswer : taEl.value.trim();
     if (!answer) return;
 
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+    console.log(`[${timestamp}] 🔄 [SEND ANSWER] Submitting answer for Q${questionNum}: "${answer.substring(0, 60)}${answer.length > 60 ? '...' : ''}"`);
+
     const sendBtn  = document.getElementById('send-btn');
     const voiceBtn = document.getElementById('voice-btn');
     sendBtn.disabled  = true;
@@ -530,31 +552,48 @@
         }),
       });
 
-      const data = await res.json();
+      const rawBody = await res.text();
+      let data;
+      try {
+        data = JSON.parse(rawBody);
+      } catch (parseErr) {
+        throw new Error(`Non-JSON response (${res.status}): ${rawBody.slice(0, 180)}`);
+      }
       removeThinking();
 
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
 
-      const resp = data.response;
+      const resp = data.response || {};
+      const followUpText = typeof resp.follow_up === 'string' ? resp.follow_up : (resp.follow_up != null ? String(resp.follow_up) : '');
+      const transitionText = typeof resp.transition === 'string' ? resp.transition : (resp.transition != null ? String(resp.transition) : '');
+      const questionText = typeof resp.question === 'string' ? resp.question : (resp.question != null ? String(resp.question) : '');
+      console.log(`[${timestamp}] 📨 [RESPONSE] should_follow_up=${resp.should_follow_up}, has_follow_up=${!!resp.follow_up}, next_question=${!!resp.question}`);
 
       // Collect score
       if (resp.evaluation?.score != null) scores.push(resp.evaluation.score);
 
       // If follow-up needed, speak and display it (recording restarts after TTS)
-      if (resp.should_follow_up && resp.follow_up && !resp.session_complete) {
-        addAIMessage(resp.follow_up, questionNum);
-        await speakText(resp.follow_up);
+      if (resp.should_follow_up && followUpText && !resp.session_complete) {
+        const tsFollow = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+        console.log(`[${tsFollow}] 📍 [FOLLOW-UP] Question still Q${questionNum} (follow-up detected, returning early)`);
+        addAIMessage(followUpText, questionNum);
+        await speakText(followUpText);
         // Don't increment questionNum for follow-ups
         return;
       }
 
+      const oldQ = questionNum;
       questionNum++;
       const displayQ = Math.min(questionNum, totalQuestions);
+      const tsUpdate = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      console.log(`[${tsUpdate}] 📊 [QUESTION UPDATE] Q${oldQ} → Q${questionNum} (badge updated)`);
       document.getElementById('q-badge').textContent = `Q ${displayQ} / ${totalQuestions}`;
 
       if (resp.session_complete || questionNum > totalQuestions) {
         // Speak closing line then redirect
-        const closing = resp.transition || "That concludes our interview. Thank you for your time!";
+        const closing = transitionText || "That concludes our interview. Thank you for your time!";
         addAIMessage(closing, questionNum - 1);
         await speakText(closing);
         goToReport();
@@ -562,25 +601,27 @@
       }
 
       // Speak transition if present
-      if (resp.transition) {
+      if (transitionText) {
         const transDiv = document.createElement('div');
         transDiv.className = 'fade-in';
-        transDiv.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:4px;letter-spacing:.06em;">Interviewer</div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:6px 10px;border-left:2px solid rgba(255,255,255,0.08);">${esc(resp.transition)}</div>`;
+        transDiv.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:4px;letter-spacing:.06em;">Interviewer</div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:6px 10px;border-left:2px solid rgba(255,255,255,0.08);">${esc(transitionText)}</div>`;
         document.getElementById('messages').appendChild(transDiv);
         scrollMessages();
-        await speakText(resp.transition);
+        await speakText(transitionText);
       }
 
       // Display & speak next question (speakText auto-restarts recording when done)
-      if (resp.question) {
-        addAIMessage(resp.question, questionNum);
-        await speakText(resp.question);
+      if (questionText) {
+        addAIMessage(questionText, questionNum);
+        await speakText(questionText);
       }
 
     } catch(e) {
+      console.error('[SEND ANSWER ERROR]', e);
       removeThinking();
-      setStatus('Connection error — is the server running?', '');
-      addAIMessage('⚠ Connection error — is the server running?', questionNum);
+      const errMsg = e?.message ? String(e.message) : 'Unknown error';
+      setStatus(`Request failed: ${errMsg}`, '');
+      addAIMessage(`⚠ Request failed: ${esc(errMsg)}`, questionNum);
     } finally {
       sendBtn.disabled  = false;
       voiceBtn.disabled = false;

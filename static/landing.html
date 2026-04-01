@@ -244,6 +244,7 @@
         // ── Store everything in localStorage before navigating ──
         localStorage.setItem('mm_session_id', data.session_id);
         localStorage.setItem('mm_first_question', data.response.question);
+        localStorage.setItem('mm_total_questions', data.response.total_questions || 5);
         localStorage.setItem('mm_config', JSON.stringify({
           mode, difficulty: selectedDiff, company, role,
           label: `${selectedDiff} · ${mode.replace('_',' ')} · ${company}`

@@ -61,8 +61,11 @@ def ask_groq(messages: list[dict]) -> dict:
 
 def say(text: str):
     """Print and speak a line."""
-    print(f"\n🎙  Interviewer: {text}\n")
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    print(f"\n[{timestamp}] 🎙 [MODEL SPEAKING] Interviewer: {text}\n")
     speak(text=text)
+    print(f"[{timestamp}] ✓ Speech finished")
 
 
 def hear() -> str:
@@ -155,6 +158,8 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     It handles the full evaluation → optional follow-up generation → next
     question flow, keeping routing.py simple.
 
+    Enforces: only ONE follow-up per main question, then moves to next question.
+
     Args:
         session:      the session dict stored in SESSIONS (mutated in-place)
         answer:       the candidate's answer text
@@ -163,12 +168,21 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     Returns:
         The Groq response dict, enriched with:
           - follow_up populated if LLM omitted it but a follow-up is needed
+          - question populated with next question (if not last)
+          - transition with natural acknowledgement
           - session_complete = True when this was the last question
     """
     messages       = session["messages"]
     cfg            = session["cfg"]
     total          = cfg["total_questions"]
     is_last        = question_num >= total
+
+    # Initialize tracking dict if not present
+    if "follow_ups_asked" not in session:
+        session["follow_ups_asked"] = set()
+
+    # Check if we've already asked a follow-up for THIS question
+    already_asked_followup = question_num in session["follow_ups_asked"]
 
     content = (
         f'Candidate answer: "{answer}"\n\n'
@@ -183,10 +197,20 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
     messages.append({"role": "assistant", "content": json.dumps(resp)})
 
     # Follow-up: trigger if LLM flagged it OR score is low
+    # BUT ONLY if we haven't already asked a follow-up for this question
     evaluation    = resp.get("evaluation") or {}
-    score         = evaluation.get("score")
+    raw_score     = evaluation.get("score")
+    score         = None
+    if raw_score is not None:
+        try:
+            score = float(raw_score)
+        except (TypeError, ValueError):
+            print(f"[warn] Non-numeric score from model: {raw_score!r}")
     print(f"score: {score}")
-    should_follow = resp.get("should_follow_up") or (score is not None and score < cfg["follow_up_threshold"])
+    should_follow = (
+        resp.get("should_follow_up") or 
+        (score is not None and score < cfg["follow_up_threshold"])
+    ) and not already_asked_followup
 
     if should_follow and not is_last and not resp.get("follow_up"):
         messages.append({
@@ -197,11 +221,29 @@ def process_answer(session: dict, answer: str, question_num: int) -> dict:
                 "Respond in the same JSON format. Set evaluation to null."
             ),
         })
-        print("\n Asking follow up question \n")
+        print(f"\n[Follow-up for Q{question_num}: generating]\n")
         fu_resp = ask_groq(messages)
         messages.append({"role": "assistant", "content": json.dumps(fu_resp)})
         resp["follow_up"]      = fu_resp.get("follow_up") or fu_resp.get("question")
         resp["should_follow_up"] = True
+        session["follow_ups_asked"].add(question_num)
+    elif should_follow and not is_last and resp.get("follow_up"):
+        # Model already provided a follow-up; still mark this question as handled.
+        session["follow_ups_asked"].add(question_num)
+
+    # After a follow-up has been answered (detected by: already_asked_followup + not should_follow),
+    # we need to ask for the next main question
+    elif already_asked_followup and not resp.get("should_follow_up") and not is_last:
+        print(f"\n[After follow-up for Q{question_num}: requesting next question]\n")
+        messages.append({
+            "role": "user",
+            "content": f"Now ask question {question_num + 1} of {total}. Do NOT evaluate."
+        })
+        next_resp = ask_groq(messages)
+        messages.append({"role": "assistant", "content": json.dumps(next_resp)})
+        # Merge next question + transition into response
+        resp["question"] = next_resp.get("question")
+        resp["transition"] = next_resp.get("transition") or resp.get("transition")
 
     if is_last:
         resp["session_complete"] = True

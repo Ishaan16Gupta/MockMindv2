@@ -5,6 +5,7 @@ import interview_flow
 import code_editor
 from speech_portion.tts import synthesize
 from speech_portion.stt import transcribe_from_bytes
+from api_code_editor.code_runner import is_safe_code, run_python_code, analyse_complexity
 
 app = Flask(__name__)
 
@@ -21,6 +22,52 @@ def _json_safe(value):
     if isinstance(value, (list, tuple, set)):
         return [_json_safe(v) for v in value]
     return str(value)
+
+
+def _normalize_code_submission(code: str) -> str:
+    """Normalize pasted code so fenced snippets and chat artifacts still run."""
+    if not code:
+        return ""
+
+    text = (
+        str(code)
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replace("\u00a0", " ")
+    )
+
+    # Strip common zero-width characters that get copied from chat apps.
+    text = "".join(ch for ch in text if ch not in {"\u200b", "\u200c", "\u200d", "\ufeff"})
+
+    stripped = text.strip()
+    if stripped.startswith("```") and stripped.endswith("```"):
+        lines = stripped.split("\n")
+        if lines:
+            lines = lines[1:-1]
+        text = "\n".join(lines)
+
+    # Remove a single leading fence language tag when code is pasted as a bare block.
+    text = text.lstrip("\n")
+    if text.lower().startswith(("python\n", "py\n", "javascript\n", "js\n", "java\n", "cpp\n", "c++\n", "typescript\n", "ts\n")):
+        text = text.split("\n", 1)[1] if "\n" in text else ""
+
+    # Remove quote markers from chat responses.
+    text = "\n".join(line[2:] if line.startswith("> ") else line[1:] if line.startswith(">") else line for line in text.split("\n"))
+
+    lines = text.split("\n")
+    non_empty = [line for line in lines if line.strip()]
+    if non_empty:
+        leading_indents = []
+        for line in non_empty:
+            indent = len(line) - len(line.lstrip(" \t"))
+            if indent > 0:
+                leading_indents.append(indent)
+        if leading_indents and len(leading_indents) == len(non_empty):
+            dedent_by = min(leading_indents)
+            if dedent_by > 0:
+                lines = [line[dedent_by:] if len(line) >= dedent_by else line for line in lines]
+
+    return "\n".join(lines).strip("\n")
 
 # ── PAGE ROUTES ────────────────────────────────────────────────────────────────
 
@@ -91,6 +138,51 @@ def stt():
         return jsonify({"error": "No audio data received"}), 400
     transcript = transcribe_from_bytes(request.data, request.content_type or "audio/webm")
     return jsonify({"transcript": transcript})
+
+
+@app.route("/api/code/run", methods=["POST"])
+def run_code():
+    data = request.get_json() or {}
+    code = _normalize_code_submission(data.get("code", ""))
+    test_cases = data.get("test_cases", [])
+
+    if not code.strip():
+        return jsonify({"error": "No code provided"}), 400
+    if not isinstance(test_cases, list) or not test_cases:
+        return jsonify({"error": "No test cases provided"}), 400
+
+    safe, reason = is_safe_code(code)
+    if not safe:
+        return jsonify({"error": f"Code blocked: {reason}"}), 400
+
+    results = []
+    for i, test_case in enumerate(test_cases, 1):
+        execution = run_python_code(code, test_case.get("input"), data.get("time_limit_ms", 3000))
+        actual = execution.get("result")
+        error = execution.get("error")
+        expected = test_case.get("expected")
+        passed = error is None and actual == expected
+
+        results.append({
+            "label": test_case.get("label", f"Test {i}"),
+            "input": test_case.get("input"),
+            "expected": expected,
+            "actual": actual,
+            "passed": passed,
+            "runtime_ms": execution.get("runtime_ms", 0),
+            "error": error,
+        })
+
+    complexity = analyse_complexity(code)
+    pass_count = sum(1 for result in results if result["passed"])
+    total = len(results)
+
+    return jsonify({
+        "results": results,
+        "complexity": complexity,
+        "all_passed": pass_count == total,
+        "pass_rate": round(pass_count / total, 2) if total else 0,
+    })
 
 
 @app.route("/api/interview/answer", methods=["POST"])

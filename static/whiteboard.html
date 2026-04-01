@@ -41,6 +41,14 @@
     .etab.active { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
     .lang-sel { margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: rgba(255,255,255,0.5); font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; outline: none; cursor: pointer; }
     .lang-sel option { background: #1c1c20; }
+    .problem-sel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: rgba(255,255,255,0.7); font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; outline: none; cursor: pointer; max-width: 190px; }
+    .problem-sel option { background: #1c1c20; }
+    .challenge-card { padding: 14px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .challenge-kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 6px; }
+    .challenge-title { font-family: var(--font-serif); font-size: 22px; color: rgba(255,255,255,0.92); margin-bottom: 6px; }
+    .challenge-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .challenge-pill { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.55); padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
+    .challenge-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.68); }
     .editor-main { flex: 1; display: flex; overflow: auto; }
     .line-nums { padding: 18px 10px 18px 14px; font-family: var(--font-mono); font-size: 13px; line-height: 1.75; color: rgba(255,255,255,0.15); user-select: none; text-align: right; flex-shrink: 0; min-width: 42px; border-right: 1px solid rgba(255,255,255,0.04); }
     .code-ta { flex: 1; background: transparent; border: none; resize: none; color: rgba(255,255,255,0.88); font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; tab-size: 4; padding: 18px 16px; caret-color: var(--accent-2); outline: none; white-space: pre; overflow: auto; }
@@ -49,6 +57,8 @@
     .c-line { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.45); }
     .c-line.pass { color: var(--green); }
     .c-line.fail { color: #ff6b6b; }
+    .c-line.info { color: rgba(255,255,255,0.58); }
+    .c-line.summary { color: rgba(255,255,255,0.72); }
     .editor-footer { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); flex-shrink: 0; }
     .run-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; background: var(--teal); border: none; border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.18s; }
     .run-btn:hover { filter: brightness(1.1); }
@@ -156,9 +166,20 @@
           <button class="etab active" onclick="switchTab(this,'code')">solution.py</button>
           <button class="etab" onclick="switchTab(this,'notes')">notes.md</button>
         </div>
+        <select class="problem-sel" id="problem-sel"></select>
         <select class="lang-sel" id="lang-sel">
           <option>Python</option><option>JavaScript</option><option>Java</option><option>C++</option>
         </select>
+      </div>
+      <div class="challenge-card">
+        <div class="challenge-kicker">Coding Challenge</div>
+        <div class="challenge-title" id="problem-title">Loading challenge…</div>
+        <div class="challenge-meta">
+          <span class="challenge-pill" id="problem-difficulty">—</span>
+          <span class="challenge-pill" id="problem-input">—</span>
+          <span class="challenge-pill" id="problem-output">—</span>
+        </div>
+        <div class="challenge-desc" id="problem-desc">Loading test description…</div>
       </div>
       <div class="editor-main">
         <div class="line-nums" id="line-nums">1</div>
@@ -221,6 +242,38 @@
   const firstQuestion = localStorage.getItem('mm_first_question');
   const config       = JSON.parse(localStorage.getItem('mm_config') || '{}');
 
+  const WHITEBOARD_PROBLEMS = [
+    {
+      id: 'two_sum',
+      title: 'Two Sum',
+      difficulty: 'Easy',
+      description: 'Return the indices of the two numbers that add up to the target.',
+      input_format: 'nums: list[int], target: int',
+      output_format: 'list[int]',
+      starter_code: 'def two_sum(nums, target):\n    pass\n',
+      test_cases: [
+        { label: 'Basic case', input: [[2, 7, 11, 15], 9], expected: [0, 1] },
+        { label: 'Middle pair', input: [[3, 2, 4], 6], expected: [1, 2] },
+      ],
+    },
+    {
+      id: 'palindrome_check',
+      title: 'Palindrome Check',
+      difficulty: 'Easy',
+      description: 'Check whether a string reads the same forwards and backwards.',
+      input_format: 's: str',
+      output_format: 'bool',
+      starter_code: 'def is_palindrome(s):\n    pass\n',
+      test_cases: [
+        { label: 'Palindrome', input: 'racecar', expected: true },
+        { label: 'Not a palindrome', input: 'hello', expected: false },
+      ],
+    },
+  ];
+
+  const WHITEBOARD_PROBLEM_KEY = 'mm_whiteboard_problem_id';
+  const WHITEBOARD_CODE_PREFIX = 'mm_whiteboard_code_';
+
   // ── Initialize Interview ──────────────────────────────────────────
   let questionNum    = 1;
   let totalQuestions = 5;  // Will be updated from server on start
@@ -237,12 +290,16 @@
   let isRecording    = false;
   let micStream      = null;  // dedicated stream for STT (separate from camera stream)
 
+  let currentProblemIndex = 0;
+  let currentProblem = WHITEBOARD_PROBLEMS[0];
+
   // ── Init ───────────────────────────────────────────────────────────────────
   document.getElementById('session-info').textContent = config.label || 'Interview Session';
 
   const ta = document.getElementById('code-ta');
-  ta.value = 'def solution():\n    # Write your solution here\n    pass\n';
-  updateLineNums();
+  const problemSelect = document.getElementById('problem-sel');
+
+  initCodingWorkspace();
 
   startTimer();
   initCamera();
@@ -254,6 +311,132 @@
     totalQuestions = parseInt(storedTotal);
     const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
     console.log(`[${timestamp}] ℹ️ [SETUP] Total questions fetched from server: ${totalQuestions}`);
+  }
+
+  function initCodingWorkspace() {
+    populateProblemSelector();
+
+    const savedProblemId = localStorage.getItem(WHITEBOARD_PROBLEM_KEY);
+    const savedIndex = WHITEBOARD_PROBLEMS.findIndex(p => p.id === savedProblemId);
+    currentProblemIndex = savedIndex >= 0 ? savedIndex : 0;
+    currentProblem = WHITEBOARD_PROBLEMS[currentProblemIndex];
+    problemSelect.value = currentProblem.id;
+
+    loadProblem(currentProblem, true);
+
+    ta.addEventListener('input', handleCodeInput);
+    ta.addEventListener('paste', handleCodePaste);
+    ta.addEventListener('keydown', handleCodeKeydown);
+    problemSelect.addEventListener('change', handleProblemChange);
+  }
+
+  function populateProblemSelector() {
+    problemSelect.innerHTML = WHITEBOARD_PROBLEMS.map(problem => `
+      <option value="${problem.id}">${problem.title}</option>
+    `).join('');
+  }
+
+  function problemStorageKey(problemId) {
+    return `${WHITEBOARD_CODE_PREFIX}${problemId}`;
+  }
+
+  function saveCurrentCode() {
+    if (!currentProblem) return;
+    localStorage.setItem(problemStorageKey(currentProblem.id), ta.value);
+    localStorage.setItem(WHITEBOARD_PROBLEM_KEY, currentProblem.id);
+  }
+
+  function getSavedCode(problemId) {
+    return localStorage.getItem(problemStorageKey(problemId)) || '';
+  }
+
+  function loadProblem(problem, useSavedDraft = true) {
+    currentProblem = problem;
+    document.getElementById('problem-title').textContent = problem.title;
+    document.getElementById('problem-difficulty').textContent = problem.difficulty;
+    document.getElementById('problem-input').textContent = problem.input_format;
+    document.getElementById('problem-output').textContent = problem.output_format;
+    document.getElementById('problem-desc').textContent = problem.description;
+    document.getElementById('code-ta').placeholder = `# Solve ${problem.title} here…`;
+    document.getElementById('line-nums').innerHTML = '1';
+
+    const savedCode = useSavedDraft ? getSavedCode(problem.id) : '';
+    ta.value = savedCode || problem.starter_code;
+    updateLineNums();
+  }
+
+  function handleProblemChange() {
+    saveCurrentCode();
+    const selectedId = problemSelect.value;
+    const nextProblem = WHITEBOARD_PROBLEMS.find(problem => problem.id === selectedId) || WHITEBOARD_PROBLEMS[0];
+    currentProblemIndex = WHITEBOARD_PROBLEMS.findIndex(problem => problem.id === nextProblem.id);
+    loadProblem(nextProblem, true);
+  }
+
+  function handleCodeInput() {
+    updateLineNums();
+    saveCurrentCode();
+  }
+
+  function normalizePastedCode(rawText) {
+    if (!rawText) return '';
+
+    let text = String(rawText)
+      .replace(/\r\n?/g, '\n')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[\u200b\u200c\u200d\ufeff]/g, '');
+
+    const fencedMatch = text.match(/```(?:[\w#+.-]+)?\n([\s\S]*?)\n```/);
+    if (fencedMatch) {
+      text = fencedMatch[1];
+    } else {
+      const trimmed = text.trim();
+      if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
+        text = trimmed.split('\n').slice(1, -1).join('\n');
+      }
+    }
+
+    text = text
+      .replace(/^> ?/gm, '')
+      .replace(/^\s*(python|py|javascript|js|java|cpp|c\+\+|typescript|ts)\s*$/i, '')
+      .replace(/^\s*\d+\.?\s+/gm, '');
+
+    const lines = text.split('\n');
+    const nonEmpty = lines.filter(line => line.trim());
+    const indents = nonEmpty
+      .map(line => (line.match(/^\s*/)?.[0].length || 0))
+      .filter(indent => indent > 0);
+
+    if (indents.length && indents.length === nonEmpty.length) {
+      const dedentBy = Math.min(...indents);
+      if (dedentBy > 0) {
+      text = lines.map(line => line.slice(dedentBy)).join('\n');
+      }
+    }
+
+    return text.trimEnd();
+  }
+
+  function insertTextAtCursor(text) {
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.setRangeText(text, start, end, 'end');
+    handleCodeInput();
+  }
+
+  function handleCodePaste(event) {
+    const pasted = event.clipboardData?.getData('text/plain') || '';
+    const cleaned = normalizePastedCode(pasted);
+    if (!cleaned) return;
+    event.preventDefault();
+    insertTextAtCursor(cleaned);
+  }
+
+  function handleCodeKeydown(event) {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      insertTextAtCursor('    ');
+    }
   }
 
   // Display first question and speak it
@@ -720,25 +903,16 @@
   }
 
   // ── Editor ─────────────────────────────────────────────────────────────────
-  ta.addEventListener('input', updateLineNums);
-  ta.addEventListener('keydown', e => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const s = ta.selectionStart, end = ta.selectionEnd;
-      ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
-      ta.selectionStart = ta.selectionEnd = s + 4;
-      updateLineNums();
-    }
-  });
-
   function updateLineNums() {
     const lines = ta.value.split('\n');
     document.getElementById('line-nums').innerHTML = lines.map((_, i) => i + 1).join('<br>');
   }
 
   function resetCode() {
-    ta.value = 'def solution():\n    # Write your solution here\n    pass\n';
-    updateLineNums();
+    if (!currentProblem) return;
+    localStorage.removeItem(problemStorageKey(currentProblem.id));
+    ta.value = currentProblem.starter_code;
+    handleCodeInput();
   }
 
   function esc(s) {
@@ -754,13 +928,96 @@
     btn.classList.add('active');
   }
 
+  function valueToText(value) {
+    if (typeof value === 'string') return value;
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return String(value);
+    }
+  }
+
+  function renderConsole(lines) {
+    const consoleEl = document.getElementById('console');
+    const rows = lines.length
+      ? lines.map(line => `<div class="c-line ${line.cls || ''}">${esc(line.text)}</div>`).join('')
+      : '<div class="c-line info">Run code to see output…</div>';
+
+    consoleEl.innerHTML = `<div class="console-lbl">Console Output</div>${rows}`;
+  }
+
+  function renderRunResults(data) {
+    const results = data.results || [];
+    const passed = results.filter(result => result.passed).length;
+    const total = results.length;
+    const summary = total
+      ? `${passed}/${total} tests passed · ${Math.round((data.pass_rate || 0) * 100)}%`
+      : 'No tests available';
+
+    const lines = [
+      { cls: 'summary', text: summary },
+      { cls: 'info', text: `Complexity: time ${data.complexity?.time || 'Unknown'} | space ${data.complexity?.space || 'Unknown'}` },
+    ];
+
+    results.forEach(result => {
+      lines.push({
+        cls: result.passed ? 'pass' : 'fail',
+        text: `${result.passed ? 'PASS' : 'FAIL'} · ${result.label}`,
+      });
+
+      if (!result.passed && result.error) {
+        lines.push({ cls: 'fail', text: `  Error: ${result.error}` });
+      } else if (!result.passed) {
+        lines.push({
+          cls: 'fail',
+          text: `  Expected ${valueToText(result.expected)} but got ${valueToText(result.actual)}`,
+        });
+      }
+    });
+
+    renderConsole(lines);
+  }
+
   async function runCode() {
     const btn = document.getElementById('run-btn');
+    if (!currentProblem) return;
+
+    saveCurrentCode();
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Running…';
-    await new Promise(r => setTimeout(r, 1500));
-    btn.disabled = false;
-    btn.innerHTML = '▶ Run Tests';
+    renderConsole([{ cls: 'info', text: `Running ${currentProblem.test_cases.length} test${currentProblem.test_cases.length === 1 ? '' : 's'}…` }]);
+
+    try {
+      const res = await fetch('/api/code/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: ta.value,
+          test_cases: currentProblem.test_cases,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      renderRunResults(data);
+
+      const passed = data.results.filter(result => result.passed).length;
+      const total = data.results.length;
+      document.getElementById('test-badge').textContent = `${passed}/${total}`;
+      document.getElementById('test-badge').style.color = data.all_passed ? 'var(--green)' : '#ff6b6b';
+    } catch (error) {
+      renderConsole([
+        { cls: 'fail', text: `Run failed: ${error.message}` },
+      ]);
+      document.getElementById('test-badge').textContent = 'Error';
+      document.getElementById('test-badge').style.color = '#ff6b6b';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '▶ Run Tests';
+    }
   }
   </script>
 

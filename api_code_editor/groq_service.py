@@ -14,8 +14,8 @@ from typing import Any
 from groq import Groq
 from dotenv import load_dotenv
 
-# load_dotenv(override=True)
-load_dotenv()
+load_dotenv(override=True)
+# load_dotenv()
 
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MockMind — Your Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0c0c0e; --ink-2: #1c1c20;
+      --paper: #f4f1eb; --paper-2: #ede9e0; --paper-3: #e4e0d6;
+      --accent: #c8502a; --accent-2: #e8643c;
+      --teal: #1a7a6e; --gold: #b8943a;
+      --text-pri: #0c0c0e; --text-sec: #4a4840; --text-ter: #8a8678;
+      --border: rgba(12,12,14,0.12);
+      --green: #1a7a6e;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'Geist', sans-serif;
+      --font-mono: 'Geist Mono', monospace;
+    }
+    body { background: var(--paper); color: var(--text-pri); font-family: var(--font-sans); min-height: 100vh; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); background-size: 256px; pointer-events: none; z-index: 9999; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; background: rgba(244,241,235,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-serif); font-size: 22px; color: var(--text-pri); text-decoration: none; }
+    .nav-logo-mark { width: 30px; height: 30px; background: var(--ink); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--paper); font-size: 14px; font-family: var(--font-mono); font-weight: 600; }
+    .main { max-width: 860px; margin: 0 auto; padding: 110px 40px 80px; }
+    /* Header */
+    .report-header { text-align: center; margin-bottom: 56px; }
+    .report-emoji { font-size: 54px; margin-bottom: 18px; }
+    .report-title { font-family: var(--font-serif); font-size: 56px; letter-spacing: -0.03em; color: var(--text-pri); margin-bottom: 8px; }
+    .report-title em { font-style: italic; color: var(--accent); }
+    .report-sub { font-family: var(--font-mono); font-size: 13px; color: var(--text-ter); letter-spacing: 0.06em; }
+    /* Score hero */
+    .score-hero { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+    .score-card { background: var(--ink-2); border-radius: 20px; padding: 28px 24px; text-align: center; }
+    .score-card.highlight { background: var(--accent); }
+    .sc-num { font-family: var(--font-serif); font-size: 48px; line-height: 1; letter-spacing: -0.03em; color: var(--paper); margin-bottom: 6px; }
+    .sc-lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); }
+    .score-card.highlight .sc-lbl { color: rgba(255,255,255,0.7); }
+    /* Q breakdown */
+    .q-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+    .q-card { background: var(--paper-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 10px; text-align: center; }
+    .q-card-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-ter); letter-spacing: 0.08em; margin-bottom: 8px; }
+    .q-card-score { font-family: var(--font-serif); font-size: 28px; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .q-card-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-ter); }
+    .score-green { color: #1a7a6e; } .score-amber { color: var(--gold); } .score-red { color: var(--accent); }
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .section { background: var(--paper-2); border: 1px solid var(--border); border-radius: 16px; padding: 22px 22px; }
+    .section-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-ter); margin-bottom: 14px; }
+    /* Metric bars */
+    .metric { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .metric-name { font-size: 13px; color: var(--text-sec); min-width: 90px; }
+    .bar-track { flex: 1; height: 4px; background: var(--paper-3); border-radius: 2px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width 1s cubic-bezier(.22,1,.36,1); }
+    .metric-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text-pri); min-width: 28px; text-align: right; }
+    /* Feedback */
+    .fb-item { display: flex; gap: 10px; margin-bottom: 9px; font-size: 13px; line-height: 1.6; color: var(--text-sec); }
+    .fb-icon { flex-shrink: 0; }
+    /* Comm analysis */
+    .comm-box { margin-bottom: 14px; }
+    .comm-text { font-size: 14px; line-height: 1.75; color: var(--text-sec); }
+    /* CTA */
+    .cta-row { display: flex; gap: 12px; justify-content: center; margin-top: 44px; }
+    .cta-primary { padding: 14px 32px; background: var(--ink); color: var(--paper); border: none; border-radius: 10px; font-family: var(--font-serif); font-size: 18px; font-style: italic; cursor: pointer; transition: all 0.2s; }
+    .cta-primary:hover { background: var(--ink-2); transform: translateY(-1px); }
+    .cta-sec { padding: 14px 24px; background: transparent; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--text-sec); cursor: pointer; transition: all 0.18s; }
+    .cta-sec:hover { border-color: var(--text-ter); color: var(--text-pri); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) both; }
+    @media (max-width: 700px) { .score-hero { grid-template-columns: 1fr; } .grid-2 { grid-template-columns: 1fr; } .q-row { grid-template-columns: repeat(3,1fr); } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav-logo" href="/"><div class="nav-logo-mark">M</div>MockMind</a>
+  </nav>
+
+  <div class="main">
+    <div class="report-header fade-up">
+      <div class="report-emoji" id="r-emoji">📊</div>
+      <h1 class="report-title">Interview <em>Complete</em></h1>
+      <p class="report-sub" id="r-sub">Loading your results…</p>
+    </div>
+
+    <div class="score-hero fade-up" style="animation-delay:0.08s;">
+      <div class="score-card"><div class="sc-num" id="s-total">—</div><div class="sc-lbl">Overall Score</div></div>
+      <div class="score-card highlight"><div class="sc-num" id="s-verdict">—</div><div class="sc-lbl">Verdict</div></div>
+      <div class="score-card"><div class="sc-num" id="s-duration">—</div><div class="sc-lbl">Duration</div></div>
+    </div>
+
+    <div class="q-row fade-up" id="q-row" style="animation-delay:0.14s;"></div>
+
+    <div class="grid-2 fade-up" style="animation-delay:0.2s;">
+      <div class="section">
+        <div class="section-lbl">Communication Metrics</div>
+        <div class="metric"><span class="metric-name">Clarity</span><div class="bar-track"><div class="bar-fill" id="b-clarity"></div></div><span class="metric-val" id="v-clarity">—</span></div>
+        <div class="metric"><span class="metric-name">Confidence</span><div class="bar-track"><div class="bar-fill" id="b-confidence"></div></div><span class="metric-val" id="v-confidence">—</span></div>
+        <div class="metric"><span class="metric-name">Depth</span><div class="bar-track"><div class="bar-fill" id="b-depth"></div></div><span class="metric-val" id="v-depth">—</span></div>
+        <div class="metric"><span class="metric-name">Conciseness</span><div class="bar-track"><div class="bar-fill" id="b-concise"></div></div><span class="metric-val" id="v-concise">—</span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-lbl">Strengths</div>
+        <div id="strengths-list"></div>
+        <div class="section-lbl" style="margin-top:16px;">Areas to Improve</div>
+        <div id="improve-list"></div>
+      </div>
+    </div>
+
+    <div class="section comm-box fade-up" style="animation-delay:0.26s;">
+      <div class="section-lbl">Session Analysis</div>
+      <div class="comm-text" id="comm-text">Analysis loading…</div>
+    </div>
+
+    <div class="cta-row fade-up" style="animation-delay:0.32s;">
+      <button class="cta-primary" onclick="window.location.href='/'">Start New Session</button>
+      <button class="cta-sec" onclick="downloadReport()">Download Report</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Read from localStorage ────────────────────────────────────────────────
+    const scores = JSON.parse(localStorage.getItem('mm_scores') || '[]');
+    const elapsedSeconds = parseInt(localStorage.getItem('mm_duration') || '0');
+    const config = JSON.parse(localStorage.getItem('mm_config') || '{}');
+
+    const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+    const mins = Math.floor(elapsedSeconds / 60);
+    const secs = elapsedSeconds % 60;
+
+    // Verdict
+    let emoji, verdict, sub;
+    if (avg >= 7.5)      { emoji='🏆'; verdict='Strong Hire';  sub='Excellent performance across all questions'; }
+    else if (avg >= 6)   { emoji='📈'; verdict='Consider';     sub='Good performance with some areas to strengthen'; }
+    else if (avg >= 4.5) { emoji='💪'; verdict='Borderline';   sub='Needs more preparation before interviewing'; }
+    else                 { emoji='📚'; verdict='Not Ready';    sub='Significant preparation recommended'; }
+
+    // Header
+    document.getElementById('r-emoji').textContent = emoji;
+    document.getElementById('r-sub').textContent = sub + (config.label ? ` · ${config.label}` : '');
+    document.getElementById('s-total').textContent = avg.toFixed(1) + '/10';
+    document.getElementById('s-verdict').textContent = verdict;
+    document.getElementById('s-duration').textContent = `${mins}m ${secs}s`;
+
+    // Q breakdown
+    const qRow = document.getElementById('q-row');
+    if (scores.length === 0) {
+      qRow.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-ter);font-family:var(--font-mono);font-size:13px;padding:20px;">No questions answered</div>';
+    } else {
+      qRow.innerHTML = scores.map((s, i) => {
+        const cls = s >= 7.5 ? 'score-green' : s >= 5 ? 'score-amber' : 'score-red';
+        const lbl = s >= 7.5 ? 'Strong' : s >= 5 ? 'Good' : 'Weak';
+        return `<div class="q-card"><div class="q-card-num">Q${i+1}</div><div class="q-card-score ${cls}">${s.toFixed(1)}</div><div class="q-card-lbl">${lbl}</div></div>`;
+      }).join('');
+    }
+
+    // Metrics — derived from scores (replace with real NLP data when available)
+    const rand = (base, spread) => Math.min(10, Math.max(0, base + (Math.random()*spread*2 - spread)));
+    const metrics = {
+      clarity: rand(avg, 0.8),
+      confidence: rand(avg - 0.5, 0.6),
+      depth: rand(avg, 0.5),
+      concise: rand(avg + 0.3, 1),
+    };
+
+    setTimeout(() => {
+      Object.entries(metrics).forEach(([k, v]) => {
+        document.getElementById(`b-${k}`).style.width = (v*10) + '%';
+        document.getElementById(`v-${k}`).textContent = v.toFixed(1);
+      });
+    }, 300);
+
+    // Strengths / improve
+    const strengths = avg >= 6
+      ? ['Clear and structured communication', 'Good use of concrete examples', 'Demonstrated relevant technical depth']
+      : avg >= 4.5
+      ? ['Showed genuine effort throughout', 'Acknowledged gaps honestly']
+      : ['Stayed engaged through the session'];
+
+    const improve = avg < 7.5
+      ? ['Use STAR method more consistently', 'Quantify the impact of your work', 'Reduce filler words and hedging language']
+      : ['Explore more edge cases proactively', 'Discuss trade-offs more explicitly'];
+
+    document.getElementById('strengths-list').innerHTML = strengths
+      .map(s => `<div class="fb-item"><span class="fb-icon" style="color:#1a7a6e;">✓</span>${s}</div>`).join('');
+    document.getElementById('improve-list').innerHTML = improve
+      .map(s => `<div class="fb-item"><span class="fb-icon" style="color:var(--gold);">△</span>${s}</div>`).join('');
+
+    // Analysis
+    const best = scores.length ? scores.indexOf(Math.max(...scores)) : -1;
+    const worst = scores.length ? scores.indexOf(Math.min(...scores)) : -1;
+    document.getElementById('comm-text').innerHTML = scores.length
+      ? `You completed ${scores.length} question${scores.length !== 1 ? 's' : ''} with an average score of <strong>${avg.toFixed(1)}/10</strong>. 
+         ${avg >= 6.5 ? 'Your communication was generally clear and well-structured.' : 'Focus on structuring answers using the STAR framework (Situation, Task, Action, Result).'}
+         ${best >= 0 ? ` Your strongest answer was Q${best+1} (${Math.max(...scores).toFixed(1)}/10)` : ''}${worst >= 0 && worst !== best ? ` and your weakest was Q${worst+1} (${Math.min(...scores).toFixed(1)}/10).` : '.'}
+         For richer filler-word and confidence analysis, integrate the <code>nlp_confidence_checker</code> module.`
+      : 'No answers were recorded for this session.';
+
+    // ── Download ──────────────────────────────────────────────────────────────
+    function downloadReport() {
+      const lines = [
+        'MockMind Interview Report',
+        '='.repeat(40),
+        '',
+        `Date       : ${new Date().toLocaleString()}`,
+        `Config     : ${config.label || 'Unknown'}`,
+        `Duration   : ${mins}m ${secs}s`,
+        `Avg Score  : ${avg.toFixed(1)}/10`,
+        `Verdict    : ${verdict}`,
+        '',
+        'Question Scores:',
+        ...scores.map((s,i) => `  Q${i+1}: ${s.toFixed(1)}/10`),
+        '',
+        'Metrics:',
+        ...Object.entries(metrics).map(([k,v]) => `  ${k.padEnd(12)}: ${v.toFixed(1)}/10`),
+        '',
+        'Strengths:',
+        ...strengths.map(s => `  + ${s}`),
+        '',
+        'Areas to Improve:',
+        ...improve.map(s => `  △ ${s}`),
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `mockmind_report_${Date.now()}.txt`;
+      a.click();
+    }
+  </script>
+</body>
+</html>

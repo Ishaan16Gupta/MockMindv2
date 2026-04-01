@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MockMind — AI Interview Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0c0c0e; --ink-2: #1c1c20; --ink-3: #2a2a30;
+      --paper: #f4f1eb; --paper-2: #ede9e0; --paper-3: #e4e0d6;
+      --accent: #c8502a; --accent-2: #e8643c; --accent-dim: rgba(200,80,42,0.12);
+      --teal: #1a7a6e; --gold: #b8943a;
+      --text-pri: #0c0c0e; --text-sec: #4a4840; --text-ter: #8a8678;
+      --border: rgba(12,12,14,0.12);
+      --shadow-lg: 0 12px 40px rgba(12,12,14,0.12), 0 4px 12px rgba(12,12,14,0.08);
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'Geist', sans-serif;
+      --font-mono: 'Geist Mono', monospace;
+    }
+    body { background: var(--paper); color: var(--text-pri); font-family: var(--font-sans); min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 256px; pointer-events: none; z-index: 9999;
+    }
+    /* NAV */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; background: rgba(244,241,235,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-serif); font-size: 22px; color: var(--text-pri); }
+    .nav-logo-mark { width: 30px; height: 30px; background: var(--ink); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--paper); font-size: 14px; font-family: var(--font-mono); font-weight: 600; }
+    .nav-badge { padding: 4px 12px; background: var(--accent-dim); border: 1px solid rgba(200,80,42,0.2); border-radius: 100px; font-size: 11px; font-family: var(--font-mono); color: var(--accent); letter-spacing: 0.06em; }
+    /* LAYOUT */
+    .layout { min-height: 100vh; padding: 120px 40px 60px; display: grid; grid-template-columns: 1fr 420px; gap: 60px; max-width: 1200px; margin: 0 auto; align-items: start; }
+    /* HERO */
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-ter); margin-bottom: 24px; }
+    .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .hero-title { font-family: var(--font-serif); font-size: clamp(52px, 6vw, 88px); line-height: 0.95; letter-spacing: -0.03em; color: var(--text-pri); margin-bottom: 28px; }
+    .hero-title em { font-style: italic; color: var(--accent); }
+    .hero-desc { font-size: 17px; line-height: 1.7; color: var(--text-sec); max-width: 480px; margin-bottom: 48px; }
+    .stat-row { display: flex; gap: 40px; padding-top: 40px; border-top: 1px solid var(--border); }
+    .stat-num { font-family: var(--font-serif); font-size: 36px; color: var(--text-pri); letter-spacing: -0.03em; }
+    .stat-label { font-size: 12px; font-family: var(--font-mono); color: var(--text-ter); letter-spacing: 0.05em; margin-top: 2px; }
+    /* SETUP CARD */
+    .setup-card { background: var(--ink-2); border-radius: 24px; padding: 36px; box-shadow: var(--shadow-lg); position: sticky; top: 100px; }
+    .card-title { font-family: var(--font-serif); font-size: 24px; color: var(--paper); margin-bottom: 4px; }
+    .card-sub { font-size: 13px; color: #6a6860; font-family: var(--font-mono); margin-bottom: 28px; }
+    .field-label { display: block; font-size: 10px; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #6a6860; margin-bottom: 8px; }
+    .field-group { margin-bottom: 20px; }
+    /* Upload */
+    .upload-zone { border: 1.5px dashed rgba(255,255,255,0.12); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.02); position: relative; overflow: hidden; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: rgba(200,80,42,0.5); background: rgba(200,80,42,0.06); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 24px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: #8a8678; font-family: var(--font-mono); }
+    .upload-text strong { color: var(--paper); font-weight: 500; }
+    .upload-filename { margin-top: 8px; font-size: 12px; color: var(--accent-2); font-family: var(--font-mono); display: none; }
+    /* Select */
+    .select-field { width: 100%; appearance: none; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 36px 12px 14px; color: var(--paper); font-family: var(--font-mono); font-size: 13px; outline: none; cursor: pointer; transition: border-color 0.2s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a6860' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .select-field:focus { border-color: rgba(200,80,42,0.4); }
+    .select-field option { background: #1c1c20; }
+    /* Difficulty */
+    .diff-pills { display: flex; gap: 8px; }
+    .diff-pill { flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #6a6860; font-family: var(--font-mono); font-size: 12px; cursor: pointer; text-align: center; transition: all 0.18s; }
+    .diff-pill:hover { border-color: rgba(255,255,255,0.2); color: var(--paper); }
+    .diff-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 24px 0; }
+    /* Start button */
+    .start-btn { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: var(--font-serif); font-size: 20px; font-style: italic; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .start-btn:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(200,80,42,0.35); }
+    .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    /* Error */
+    .error-bar { margin-top: 12px; padding: 12px 14px; background: rgba(200,80,42,0.12); border: 1px solid rgba(200,80,42,0.3); border-radius: 10px; color: var(--accent-2); font-size: 12px; font-family: var(--font-mono); line-height: 1.5; display: none; }
+    /* Features */
+    .feature-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .feature-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(244,241,235,0.6); border: 1px solid var(--border); border-radius: 100px; font-size: 11px; font-family: var(--font-mono); color: var(--text-sec); }
+    .feature-dot { width: 5px; height: 5px; border-radius: 50%; }
+    /* Animations */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) both; }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .setup-card { position: static; } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-logo"><div class="nav-logo-mark">M</div>MockMind</div>
+    <div class="nav-badge">AI Interview Engine</div>
+  </nav>
+
+  <div class="layout">
+    <!-- Hero -->
+    <div>
+      <div class="eyebrow fade-up" style="animation-delay:0s;"><div class="eyebrow-dot"></div>Powered by Groq · Deepgram · MediaPipe</div>
+      <h1 class="hero-title fade-up" style="animation-delay:0.08s;">Practice<br>interviews<br>with <em>real AI</em></h1>
+      <p class="hero-desc fade-up" style="animation-delay:0.16s;">An adaptive mock interviewer that asks follow-ups, evaluates your answers with a rubric, and gives you a detailed post-interview breakdown — just like the real thing.</p>
+      <div class="stat-row fade-up" style="animation-delay:0.24s;">
+        <div><div class="stat-num">~600ms</div><div class="stat-label">Response latency</div></div>
+        <div><div class="stat-num">5 Qs</div><div class="stat-label">Per session</div></div>
+        <div><div class="stat-num">3</div><div class="stat-label">Interview types</div></div>
+      </div>
+    </div>
+
+    <!-- Setup card -->
+    <div>
+      <div class="setup-card fade-up" style="animation-delay:0.12s;">
+        <div class="card-title">Configure session</div>
+        <div class="card-sub">Set up your interview below</div>
+
+        <div class="field-group">
+          <label class="field-label">Resume (optional)</label>
+          <div class="upload-zone" id="upload-zone"
+               ondragover="event.preventDefault();this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')"
+               ondrop="handleDrop(event)">
+            <input type="file" id="resume-file" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this)" />
+            <div class="upload-icon">📄</div>
+            <div class="upload-text"><strong>Click or drag</strong> your resume here</div>
+            <div class="upload-text" style="font-size:11px;margin-top:4px;">PDF, DOC, DOCX, TXT</div>
+            <div class="upload-filename" id="upload-filename"></div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Target Role</label>
+          <select class="select-field" id="role-select">
+            <option value="software_engineer">Software Engineer</option>
+            <option value="frontend_engineer">Frontend Engineer</option>
+            <option value="backend_engineer">Backend Engineer</option>
+            <option value="ml_engineer">ML / AI Engineer</option>
+            <option value="data_scientist">Data Scientist</option>
+            <option value="devops_engineer">DevOps / Platform Engineer</option>
+            <option value="product_manager">Product Manager</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Interview Type</label>
+          <select class="select-field" id="type-select">
+            <option value="behavioral">Behavioural (STAR)</option>
+            <option value="technical">Technical / System Design</option>
+            <option value="resume_based">Resume-Based Deep Dive</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Company Type</label>
+          <select class="select-field" id="company-select">
+            <option value="faang">FAANG / Big Tech</option>
+            <option value="startup_early">Early-Stage Startup</option>
+            <option value="startup_growth">Growth Startup</option>
+            <option value="unicorn">Unicorn / Scale-up</option>
+            <option value="finance">Finance / Trading</option>
+            <option value="enterprise">Enterprise / Corp</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Difficulty</label>
+          <div class="diff-pills">
+            <div class="diff-pill" onclick="selectDiff(this,'Junior')">Junior</div>
+            <div class="diff-pill active" onclick="selectDiff(this,'Mid')">Mid</div>
+            <div class="diff-pill" onclick="selectDiff(this,'Senior')">Senior</div>
+            <div class="diff-pill" onclick="selectDiff(this,'Staff')">Staff+</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <button class="start-btn" id="start-btn" onclick="startInterview()">Begin Interview →</button>
+        <div class="error-bar" id="error-bar"></div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-pill"><div class="feature-dot" style="background:#00b878;"></div>Real-time voice</div>
+        <div class="feature-pill"><div class="feature-dot" style="background:var(--accent);"></div>Code editor</div>
+        <div class="feature-pill"><div class="feature-dot" style="background:var(--gold);"></div>AI scoring</div>
+        <div class="feature-pill"><div class="feature-dot" style="background:#7c6fcd;"></div>Posture analysis</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedDiff = 'Mid';
+
+    function selectDiff(el, val) {
+      document.querySelectorAll('.diff-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      selectedDiff = val;
+    }
+
+    function handleFile(input) {
+      if (input.files && input.files[0]) {
+        const fn = document.getElementById('upload-filename');
+        fn.textContent = '✓ ' + input.files[0].name;
+        fn.style.display = 'block';
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        document.getElementById('resume-file').files = e.dataTransfer.files;
+        const fn = document.getElementById('upload-filename');
+        fn.textContent = '✓ ' + file.name;
+        fn.style.display = 'block';
+      }
+    }
+
+    function showError(msg) {
+      const bar = document.getElementById('error-bar');
+      bar.textContent = msg;
+      bar.style.display = 'block';
+    }
+
+    async function startInterview() {
+      const btn = document.getElementById('start-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Starting…';
+      document.getElementById('error-bar').style.display = 'none';
+
+      const mode = document.getElementById('type-select').value;
+      const company = document.getElementById('company-select').value;
+      const role = document.getElementById('role-select').value;
+
+      let resumeText = '';
+      const fileInput = document.getElementById('resume-file');
+      if (fileInput.files && fileInput.files[0]) {
+        try { resumeText = (await fileInput.files[0].text()).slice(0, 600); } catch(e) {}
+      }
+
+      try {
+        const res = await fetch('/api/interview/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode, difficulty: selectedDiff, resume: resumeText }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        // ── Store everything in localStorage before navigating ──
+        localStorage.setItem('mm_session_id', data.session_id);
+        localStorage.setItem('mm_first_question', data.response.question);
+        localStorage.setItem('mm_config', JSON.stringify({
+          mode, difficulty: selectedDiff, company, role,
+          label: `${selectedDiff} · ${mode.replace('_',' ')} · ${company}`
+        }));
+
+        window.location.href = '/whiteboard';
+
+      } catch(e) {
+        showError('Could not connect. Is the server running?\n' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Begin Interview →';
+      }
+      // window.location.href = "whiteboard.html";
+    }
+  </script>
+</body>
+</html>

@@ -110,19 +110,31 @@ def get_interview_config() -> tuple[str, str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MAIN LOOP
+# API ENTRY POINT  (called by Flask routing.py)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_interview():
-    mode, difficulty, resume = get_interview_config()
-    cfg = INTERVIEW_CONFIG.get((mode, difficulty), INTERVIEW_CONFIG[("behavioral", "Mid")])
+def start_session(mode: str, difficulty: str, resume: str = "") -> dict:
+    """Start an interview session and return the first question + state.
+
+    This is the programmatic entry point used by the Flask API route.
+    It runs the Groq call for question 1 and returns everything the
+    route handler needs to build its JSON response.
+
+    Returns:
+        {
+            "question": str,           # first interview question
+            "messages": list[dict],    # full message history so far
+            "cfg": dict,               # interview config dict
+            "total_questions": int,
+            "question_num": int,       # always 1
+        }
+    """
+    cfg = INTERVIEW_CONFIG.get(
+        (mode, difficulty),
+        INTERVIEW_CONFIG[("behavioral", "Mid")]
+    )
     TOTAL_QUESTIONS = cfg["total_questions"]
 
-    messages: list[dict] = []
-    scores: list[float] = []
-    question_num = 1
-
-    # ── Start the session ────────────────────────────────────────────────────
     init_content = (
         f"Start a {difficulty} {mode} interview.\n"
         f"Session plan: {TOTAL_QUESTIONS} questions total — "
@@ -134,23 +146,50 @@ def run_interview():
         + (f"Candidate resume: {resume[:600]}\n" if resume else "")
         + "Ask question 1."
     )
-    messages.append({"role": "user", "content": init_content})
+    print(f"Init content: {init_content}\n") #ran
 
-    print("\nStarting interview…\n")
-    print(f"Asking Q{question_num}")
-
+    messages: list[dict] = [{"role": "user", "content": init_content}]
     resp = ask_groq(messages)
+    print(f"Response: {resp}\n")
     messages.append({"role": "assistant", "content": json.dumps(resp)})
 
+    return {
+        "question": resp["question"],
+        "messages": messages,
+        "cfg": cfg,
+        "total_questions": TOTAL_QUESTIONS,
+        "question_num": 1,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN LOOP
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_interview(session_id: str, cfg: dict, messages: list[dict]):
+    """Run the full interview conversation loop.
+
+    Picks up where start_session() left off — the first question has already
+    been fetched and spoken, so this loop starts by listening for the
+    candidate's first answer.
+    """
+    TOTAL_QUESTIONS = cfg["total_questions"]
+    scores: list[float] = []
+    question_num = 1
+
+    # The first question was already asked by start_session(); speak it now
+    # so the candidate hears it before we start listening.
+    first_q = json.loads(messages[-1]["content"])["question"]
+    print("\nStarting interview…\n")
     print("[say] first question")
-    say(resp["question"])
+    say(first_q)
 
     # ── Conversation loop ────────────────────────────────────────────────────
     while True:
         # Hear answer
         answer = hear()
 
-    # Handle empty input (prevents infinite loop)
+        # Handle empty input (prevents infinite loop)
         if not answer.strip() or answer.strip().lower() == "[no speech detected]":
             if question_num == TOTAL_QUESTIONS:
                 print("[say] no response → ending interview")
@@ -254,7 +293,7 @@ def run_interview():
         if not is_last_question:
             question_num += 1
 
-        # FIX 2: Backend controls termination
+        # Backend controls termination
         if question_num > TOTAL_QUESTIONS:
             print("[say] closing")
             say("That concludes our interview. Thank you for your time!")
@@ -267,5 +306,13 @@ def run_interview():
 
     print_scores(scores)
 
+
 if __name__ == "__main__":
-    run_interview()
+    # Standalone CLI mode: get config from terminal, then run
+    mode, difficulty, resume = get_interview_config()
+    session = start_session(mode, difficulty, resume)
+    run_interview(
+        session_id="cli-session",
+        cfg=session["cfg"],
+        messages=session["messages"],
+    )

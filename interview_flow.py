@@ -5,9 +5,11 @@ Run: python main.py
 
 import json
 import time
+import random
 
 import api_code_editor.groq_service as gq
 from api_code_editor.interview_config import INTERVIEW_CONFIG, get_interview_config
+from api_code_editor.problems import PROBLEMS
 from speech_portion.stt import listen
 from speech_portion.tts import speak
 
@@ -16,7 +18,7 @@ sys.path.append('nlp_confidence_checker')
 from nlp_analysis import analyze
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SYSTEM PROMPT  (mirrors app.py's INTERVIEW_SYSTEM_PROMPT)
+# SYSTEM PROMPT  (merged with coding instructions)
 # ─────────────────────────────────────────────────────────────────────────────
 
 INTERVIEW_SYSTEM_PROMPT = """You are an expert senior technical interviewer at a top-tier technology company.
@@ -30,6 +32,14 @@ Rules:
 - After every answer (except the first question), speak a natural 1-2 sentence verbal reaction
   acknowledging what the candidate said and briefly noting what was strong or what could be
   improved — as a real interviewer would. This goes in the "transition" field.
+
+CODING QUESTIONS — IMPORTANT:
+- When you are given a coding problem (marked with [CODING PROBLEM]), you MUST use that exact problem as-is. Do NOT invent a different problem.
+- For coding questions, set "requires_code_editor": true in your response.
+- The "question" field for a coding problem must be a SHORT SPOKEN INTRO ONLY — 2-3 sentences max, e.g. "Alright, let's move to a coding problem. I've loaded it into the panel on your left — take a moment to read through it and let me know when you're ready." Do NOT recite the title, description, constraints, or examples in the question field — those are already displayed in the problem panel on the candidate's screen
+- When evaluating a coding answer, you will receive the test results — evaluate based on correctness, complexity, and code quality from those results.
+- ONLY mention syntax errors if they are explicitly present in the test results (i.e., the "error" field is not null).
+- If no runtime or syntax error is present, DO NOT claim syntax issues.
 
 ALWAYS respond in this exact JSON format (no markdown, no extra text):
 {
@@ -45,6 +55,7 @@ ALWAYS respond in this exact JSON format (no markdown, no extra text):
   "follow_up": "targeted follow-up question or null",
   "should_follow_up": false,
   "model_hint": "one thing a strong answer includes",
+  "requires_code_editor": false,
   "session_complete": false
 }
 
@@ -61,6 +72,29 @@ def ask_groq(messages: list[dict]) -> dict:
     elapsed = time.perf_counter() - start
     print(f"  [response in {elapsed:.2f}s]")
     return resp
+
+
+def _pick_problems(cfg: dict) -> list[dict]:
+    """Pick `cfg['technical']` problems from the PROBLEMS bank without replacement."""
+    count = cfg.get("technical", 0)
+    if count == 0:
+        return []
+    pool = list(PROBLEMS)
+    random.shuffle(pool)
+    return pool[:count]
+
+
+def _coding_problem_snippet(problem: dict) -> str:
+    """Format a problem dict into a string for injection into the LLM prompt."""
+    return (
+        f"[CODING PROBLEM]\n"
+        f"Title: {problem['title']} ({problem['difficulty']})\n"
+        f"Description: {problem['description']}\n"
+        f"Input: {problem['input_format']}\n"
+        f"Output: {problem['output_format']}\n"
+        f"Example: Input={problem['test_cases'][0]['input']} → Output={problem['test_cases'][0]['expected']}\n"
+        f"Starter code:\n{problem['starter_code']}"
+    )
 
 
 def say(text: str):
@@ -107,10 +141,6 @@ def print_scores(scores: list[float]):
 def start_session(role: str, company_type: str, mode: str, difficulty: str, resume: str = "") -> dict:
     """Start an interview session and return the first question + state.
 
-    This is the programmatic entry point used by the Flask API route.
-    It runs the Groq call for question 1 and returns everything the
-    route handler needs to build its JSON response.
-
     Returns:
         {
             "question": str,           # first interview question
@@ -118,6 +148,9 @@ def start_session(role: str, company_type: str, mode: str, difficulty: str, resu
             "cfg": dict,               # interview config dict
             "total_questions": int,
             "question_num": int,       # always 1
+            "transcripts": list,       # transcript history for NLP analysis
+            "camera_confidences": list, # camera confidence scores
+            "requires_code_editor": bool, # whether first question needs code editor
         }
     """
     cfg = INTERVIEW_CONFIG.get(
@@ -146,43 +179,51 @@ def start_session(role: str, company_type: str, mode: str, difficulty: str, resu
     print(f"Response: {resp}\n")
     messages.append({"role": "assistant", "content": json.dumps(resp)})
 
+    # Pick coding problems if this is a technical interview
+    problems = _pick_problems(cfg)
+    
     return {
         "question": resp["question"],
+        "requires_code_editor": resp.get("requires_code_editor", False),
         "messages": messages,
         "cfg": cfg,
         "total_questions": TOTAL_QUESTIONS,
         "question_num": 1,
+        "mode": mode,
         "transcripts": [],
+        "camera_confidences": [],
+        "problems": problems,
+        "problem_index": 0,
     }
 
 
 def process_answer(session: dict, answer: str, question_num: int, camera_confidence: float = None) -> dict:
     """Evaluate a candidate's answer and return the next interviewer response.
 
-    This is the programmatic entry point used by POST /api/interview/answer.
-    It handles the full evaluation → optional follow-up generation → next
-    question flow, keeping routing.py simple.
-
-    Enforces: only ONE follow-up per main question, then moves to next question.
+    Handles both behavioral and coding questions. For coding:
+    1. Detects if this answer is for a coding problem
+    2. Evaluates using run_coding_round 
+    3. Includes analysis in response
 
     Args:
         session:      the session dict stored in SESSIONS (mutated in-place)
-        answer:       the candidate's answer text
+        answer:       the candidate's answer text (code for coding questions)
         question_num: 1-based index of the question being answered
+        camera_confidence: confidence score from camera analysis (0-10)
 
     Returns:
         The Groq response dict, enriched with:
-          - follow_up populated if LLM omitted it but a follow-up is needed
-          - question populated with next question (if not last)
-          - transition with natural acknowledgement
-          - session_complete = True when this was the last question
+          - coding_result/coding_analysis (if coding question)
+          - nlp_report: NLP analysis with camera confidence
+          - requires_code_editor: whether next question needs editor
+          - session_complete: True when this was the last question
     """
-    messages       = session["messages"]
-    cfg            = session["cfg"]
-    total          = cfg["total_questions"]
-    is_last        = question_num >= total
+    messages      = session["messages"]
+    cfg           = session["cfg"]
+    total         = cfg["total_questions"]
+    is_last       = question_num >= total
 
-    # Initialize tracking dict if not present
+    # Initialize tracking if not present
     if "follow_ups_asked" not in session:
         session["follow_ups_asked"] = set()
     if "transcripts" not in session:
@@ -190,45 +231,107 @@ def process_answer(session: dict, answer: str, question_num: int, camera_confide
     if "camera_confidences" not in session:
         session["camera_confidences"] = []
 
-    # Check if we've already asked a follow-up for THIS question
     already_asked_followup = question_num in session["follow_ups_asked"]
 
-    content = (
-        f'Candidate answer: "{answer}"\n\n'
-        + (
-            "Evaluate the answer. If it is weak, incomplete, or incorrect, ask a follow-up question."
-            if not is_last
-            else "Evaluate. This was the final question. Set session_complete to true."
+    # ── DETECT IF THIS ANSWER IS FOR A CODING QUESTION ────────────────────────
+    active_coding_problem = session.get("active_coding_problem")
+    is_coding_answer = active_coding_problem is not None
+
+    coding_result  = None
+    analysis       = None
+    coding_followup = None
+
+    if is_coding_answer:
+        from code_editor import run_coding_round
+
+        problem = active_coding_problem
+        result  = run_coding_round(answer, problem=problem)
+
+        coding_result   = result
+        analysis        = result.get("analysis")
+        coding_followup = result.get("follow_up_question")
+
+        analysis_snippet = ""
+        if analysis:
+            analysis_snippet = (
+                f'\nCode analysis: summary="{analysis.get("summary", "")}", '
+                f'strengths={analysis.get("strengths", [])}, '
+                f'issues={analysis.get("issues", [])}, '
+                f'complexity="{analysis.get("complexity_note", "")}"'
+            )
+
+        content = (
+            f'Candidate submitted code for "{problem["title"]}".\n'
+            f'Test results: {json.dumps(coding_result)}'
+            f'{analysis_snippet}\n\n'
+            + (
+                "Briefly acknowledge the submission using the analysis — 2 sentences max. "
+                "This is the final question. Set session_complete to true."
+                if is_last else
+                "Briefly acknowledge the submission using the analysis — 2 sentences max. "
+                "Do NOT ask a follow-up question yet."
+            )
         )
-    )
+        session["active_coding_problem"] = None
+        session["transcripts"].append(answer[:500])  # Store truncated code for NLP
+
+        if coding_followup and not is_last:
+            session["pending_coding_followup"] = {
+                "question": coding_followup,
+                "question_num": question_num,
+            }
+
+    else:
+        content = (
+            f'Candidate answer: "{answer}"\n\n'
+            + (
+                "Evaluate the answer. If it is weak, incomplete, or incorrect, ask a follow-up question."
+                if not is_last
+                else "Evaluate. This was the final question. Set session_complete to true."
+            )
+        )
+        session["transcripts"].append(answer)
+
+    if camera_confidence is not None:
+        session["camera_confidences"].append(camera_confidence)
+
     messages.append({"role": "user", "content": content})
     resp = ask_groq(messages)
     messages.append({"role": "assistant", "content": json.dumps(resp)})
 
-    # Append the answer to transcripts
-    session["transcripts"].append(answer)
-    if camera_confidence is not None:
-        session["camera_confidences"].append(camera_confidence)
+    # ── Attach coding result + analysis to response ────────────────────────────
+    if coding_result is not None:
+        resp["coding_result"] = coding_result
+    if analysis is not None:
+        resp["coding_analysis"] = analysis
 
-    # Follow-up: trigger if LLM flagged it OR score is low
+    # ── INJECT PENDING CODING FOLLOW-UP (overrides normal follow-up logic) ─────
+    pending_fu = session.pop("pending_coding_followup", None)
+    if pending_fu and not is_last:
+        resp["follow_up"]        = pending_fu["question"]
+        resp["should_follow_up"] = True
+        session["follow_ups_asked"].add(question_num)
+        session["question_num"]  = question_num + 1
+        return resp
+
+    # ── FOLLOW-UP: trigger if LLM flagged OR score is low ──────────────────────
     # BUT ONLY if we haven't already asked a follow-up for this question
-    evaluation    = resp.get("evaluation") or {}
-    raw_score     = evaluation.get("score")
-    score         = None
+    evaluation = resp.get("evaluation") or {}
+    raw_score  = evaluation.get("score")
+    score      = None
     if raw_score is not None:
         try:
             score = float(raw_score)
         except (TypeError, ValueError):
             print(f"[warn] Non-numeric score from model: {raw_score!r}")
     print(f"score: {score}")
-    # Determine if we should ask a follow-up (only if not already asked one for this question)
+
     should_follow = (
-        resp.get("should_follow_up") or 
+        resp.get("should_follow_up") or
         (score is not None and score < cfg["follow_up_threshold"])
     ) and not already_asked_followup
 
     if should_follow and not is_last and not resp.get("follow_up"):
-        # Generate follow-up for first time
         messages.append({
             "role": "user",
             "content": (
@@ -240,30 +343,44 @@ def process_answer(session: dict, answer: str, question_num: int, camera_confide
         print(f"\n[Follow-up for Q{question_num}: generating]\n")
         fu_resp = ask_groq(messages)
         messages.append({"role": "assistant", "content": json.dumps(fu_resp)})
-        resp["follow_up"]      = fu_resp.get("follow_up") or fu_resp.get("question")
+        resp["follow_up"]        = fu_resp.get("follow_up") or fu_resp.get("question")
         resp["should_follow_up"] = True
         session["follow_ups_asked"].add(question_num)
     elif should_follow and not is_last and resp.get("follow_up"):
-        # Model already provided a follow-up; still mark this question as handled.
         session["follow_ups_asked"].add(question_num)
 
-    # ENFORCE: Once a follow-up has been answered, ALWAYS move to next question (no follow-ups to follow-ups)
+    # ── ENFORCE: move to next question after follow-up ────────────────────────
     elif already_asked_followup and not is_last:
         print(f"\n[After follow-up for Q{question_num}: moving to next question]\n")
-        messages.append({
-            "role": "user",
-            "content": f"Now ask question {question_num + 1} of {total}. Do NOT evaluate."
-        })
+        next_q_num = question_num + 1
+        next_problem, next_problem_snippet = _get_next_problem_for_prompt(session, cfg, next_q_num)
+        next_prompt = f"Now ask question {next_q_num} of {total}. Do NOT evaluate."
+        if next_problem_snippet:
+            next_prompt += f"\n\nUse this exact coding problem:\n{next_problem_snippet}"
+        messages.append({"role": "user", "content": next_prompt})
         next_resp = ask_groq(messages)
         messages.append({"role": "assistant", "content": json.dumps(next_resp)})
-        # Merge next question + transition into response
-        resp["question"] = next_resp.get("question")
-        resp["transition"] = next_resp.get("transition") or resp.get("transition")
-        # Clear the should_follow_up flag since we're moving to next question
-        resp["should_follow_up"] = False
-        resp["follow_up"] = None
+        resp["question"]             = next_resp.get("question")
+        resp["transition"]           = next_resp.get("transition") or resp.get("transition")
+        resp["requires_code_editor"] = next_resp.get("requires_code_editor", False)
+        resp["should_follow_up"]     = False
+        resp["follow_up"]            = None
 
-    # Run NLP analysis on combined transcripts for interim and final states
+    # ── If no follow-up: ask next question ──────────────────────────────────────
+    elif not should_follow and not already_asked_followup and not is_last:
+        next_q_num = question_num + 1
+        next_problem, next_problem_snippet = _get_next_problem_for_prompt(session, cfg, next_q_num)
+        next_prompt = f"Generate question {next_q_num} of {total}. Do NOT evaluate."
+        if next_problem_snippet:
+            next_prompt += f"\n\nUse this exact coding problem:\n{next_problem_snippet}"
+        messages.append({"role": "user", "content": next_prompt})
+        next_resp = ask_groq(messages)
+        messages.append({"role": "assistant", "content": json.dumps(next_resp)})
+        resp["question"]             = next_resp.get("question")
+        resp["transition"]           = next_resp.get("transition") or resp.get("transition")
+        resp["requires_code_editor"] = next_resp.get("requires_code_editor", False)
+
+    # ── Run NLP analysis on combined transcripts ─────────────────────────────────
     combined_transcript = " ".join(session["transcripts"])
     nlp_result = analyze(combined_transcript)
     camera_scores = session["camera_confidences"]
@@ -279,6 +396,30 @@ def process_answer(session: dict, answer: str, question_num: int, camera_confide
 
     session["question_num"] = question_num + 1
     return resp
+
+
+def _get_next_problem_for_prompt(session: dict, cfg: dict, next_q_num: int) -> tuple:
+    """
+    Returns (problem_dict, snippet_str) if the next question is a coding question.
+    Promotes pending_coding_problem -> active_coding_problem.
+    Returns (None, None) otherwise.
+    """
+    total = cfg["total_questions"]
+    technical_count = cfg.get("technical", 0)
+    if technical_count == 0:
+        return None, None
+
+    non_technical = total - technical_count
+    coding_q_numbers = list(range(non_technical + 1, total + 1))
+
+    if next_q_num in coding_q_numbers:
+        problem = session.get("pending_coding_problem")
+        if problem:
+            session["active_coding_problem"] = problem
+            session.pop("pending_coding_problem", None)
+            return problem, _coding_problem_snippet(problem)
+
+    return None, None
 
 
 # ─────────────────────────────────────────────────────────────────────────────

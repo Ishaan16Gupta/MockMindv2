@@ -1,150 +1,962 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MockMind — Interview</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap"
+    rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --ink: #0c0c0e; --ink-2: #1c1c20; --ink-3: #2a2a30;
-      --accent: #c8502a; --accent-2: #e8643c;
-      --teal: #1a9e75; --green: #00b878;
-      --font-sans: 'Geist', sans-serif; --font-mono: 'Geist Mono', monospace; --font-serif: 'Instrument Serif', serif;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    html, body { height: 100%; overflow: hidden; }
-    body { background: var(--ink); color: #e0ddd8; font-family: var(--font-sans); display: flex; flex-direction: column; }
+
+    :root {
+      --ink: #0c0c0e;
+      --ink-2: #1c1c20;
+      --ink-3: #2a2a30;
+      --accent: #c8502a;
+      --accent-2: #e8643c;
+      --teal: #1a9e75;
+      --green: #00b878;
+      --font-sans: 'Geist', sans-serif;
+      --font-mono: 'Geist Mono', monospace;
+      --font-serif: 'Instrument Serif', serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--ink);
+      color: #e0ddd8;
+      font-family: var(--font-sans);
+      display: flex;
+      flex-direction: column;
+    }
 
     /* HEADER */
-    .header { height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--ink-2); border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .h-left { display: flex; align-items: center; gap: 14px; }
-    .live-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0,184,120,0.12); border: 1px solid rgba(0,184,120,0.25); border-radius: 100px; font-family: var(--font-mono); font-size: 11px; color: var(--green); }
-    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .session-info { font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.35); }
-    .h-right { display: flex; align-items: center; gap: 10px; }
-    .timer { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 8px; letter-spacing: 0.06em; }
-    .end-btn { padding: 7px 16px; background: rgba(200,80,42,0.15); border: 1px solid rgba(200,80,42,0.3); border-radius: 8px; color: var(--accent-2); font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: all 0.15s; }
-    .end-btn:hover { background: rgba(200,80,42,0.25); }
+    .header {
+      height: 52px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: var(--ink-2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .h-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(0, 184, 120, 0.12);
+      border: 1px solid rgba(0, 184, 120, 0.25);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .session-info {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .h-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timer {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px 12px;
+      border-radius: 8px;
+      letter-spacing: 0.06em;
+    }
+
+    .end-btn {
+      padding: 7px 16px;
+      background: rgba(200, 80, 42, 0.15);
+      border: 1px solid rgba(200, 80, 42, 0.3);
+      border-radius: 8px;
+      color: var(--accent-2);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .end-btn:hover {
+      background: rgba(200, 80, 42, 0.25);
+    }
 
     /* BODY */
-    .body { flex: 1; display: grid; grid-template-columns: 1fr 340px; overflow: hidden; }
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      overflow: hidden;
+    }
+
+    /* PROBLEM PANEL */
+    .problem-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--ink-2);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      width: 320px;
+    }
+
+    .problem-panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .problem-panel-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .problem-difficulty {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+
+    .problem-difficulty.easy {
+      color: var(--green);
+      border-color: rgba(0, 184, 120, 0.3);
+      background: rgba(0, 184, 120, 0.08);
+    }
+
+    .problem-difficulty.medium {
+      color: #f5a623;
+      border-color: rgba(245, 166, 35, 0.3);
+      background: rgba(245, 166, 35, 0.08);
+    }
+
+    .problem-difficulty.hard {
+      color: #ff6b6b;
+      border-color: rgba(255, 107, 107, 0.3);
+      background: rgba(255, 107, 107, 0.08);
+    }
+
+    .problem-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .problem-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .problem-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .problem-waiting {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .problem-waiting-icon {
+      font-size: 32px;
+      opacity: 0.3;
+    }
+
+    .problem-waiting-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.25);
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+    }
+
+    .problem-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.25);
+      margin-bottom: 5px;
+    }
+
+    .problem-title-text {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.3;
+    }
+
+    .problem-desc {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.7;
+    }
+
+    .problem-format-block {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .problem-format-block code {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .problem-examples {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .example-block {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .example-block .ex-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.2);
+      margin-bottom: 5px;
+    }
+
+    .example-block .ex-row {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.6;
+    }
+
+    .example-block .ex-row span.label {
+      color: rgba(255, 255, 255, 0.25);
+    }
 
     /* EDITOR */
-    .editor-area { display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
-    .editor-topbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
-    .tl-group { display: flex; gap: 5px; }
-    .tl { width: 11px; height: 11px; border-radius: 50%; }
-    .editor-tabs { display: flex; gap: 2px; }
-    .etab { padding: 5px 14px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.35); cursor: pointer; border: none; background: transparent; transition: all 0.15s; }
-    .etab.active { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
-    .lang-sel { margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: rgba(255,255,255,0.5); font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; outline: none; cursor: pointer; }
-    .lang-sel option { background: #1c1c20; }
-    .problem-sel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: rgba(255,255,255,0.7); font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; outline: none; cursor: pointer; max-width: 190px; }
-    .problem-sel option { background: #1c1c20; }
-    .challenge-card { padding: 14px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .challenge-kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 6px; }
-    .challenge-title { font-family: var(--font-serif); font-size: 22px; color: rgba(255,255,255,0.92); margin-bottom: 6px; }
-    .challenge-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-    .challenge-pill { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.55); padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
-    .challenge-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.68); }
-    .editor-main { flex: 1; display: flex; overflow: auto; }
-    .line-nums { padding: 18px 10px 18px 14px; font-family: var(--font-mono); font-size: 13px; line-height: 1.75; color: rgba(255,255,255,0.15); user-select: none; text-align: right; flex-shrink: 0; min-width: 42px; border-right: 1px solid rgba(255,255,255,0.04); }
-    .code-ta { flex: 1; background: transparent; border: none; resize: none; color: rgba(255,255,255,0.88); font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; tab-size: 4; padding: 18px 16px; caret-color: var(--accent-2); outline: none; white-space: pre; overflow: auto; }
-    .console { background: rgba(0,0,0,0.35); border-top: 1px solid rgba(255,255,255,0.05); padding: 10px 16px; max-height: 130px; overflow-y: auto; flex-shrink: 0; }
-    .console-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 6px; }
-    .c-line { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.45); }
-    .c-line.pass { color: var(--green); }
-    .c-line.fail { color: #ff6b6b; }
-    .c-line.info { color: rgba(255,255,255,0.58); }
-    .c-line.summary { color: rgba(255,255,255,0.72); }
-    .editor-footer { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); flex-shrink: 0; }
-    .run-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; background: var(--teal); border: none; border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.18s; }
-    .run-btn:hover { filter: brightness(1.1); }
-    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .reset-btn { padding: 8px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.45); font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: all 0.15s; }
-    .reset-btn:hover { color: rgba(255,255,255,0.75); }
-    .test-badge { margin-left: auto; font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+    .editor-area {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .editor-topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .tl-group {
+      display: flex;
+      gap: 5px;
+    }
+
+    .tl {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .editor-tabs {
+      display: flex;
+      gap: 2px;
+    }
+
+    .etab {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.15s;
+    }
+
+    .etab.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .lang-sel {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .lang-sel option {
+      background: #1c1c20;
+    }
+
+    .editor-main {
+      flex: 1;
+      display: flex;
+      overflow: auto;
+    }
+
+    .line-nums {
+      padding: 18px 10px 18px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.75;
+      color: rgba(255, 255, 255, 0.15);
+      user-select: none;
+      text-align: right;
+      flex-shrink: 0;
+      min-width: 42px;
+      border-right: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .code-ta {
+      flex: 1;
+      background: transparent;
+      border: none;
+      resize: none;
+      color: rgba(255, 255, 255, 0.88);
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.75;
+      tab-size: 4;
+      padding: 18px 16px;
+      caret-color: var(--accent-2);
+      outline: none;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .console {
+      background: rgba(0, 0, 0, 0.35);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 10px 16px;
+      max-height: 130px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .console-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.2);
+      margin-bottom: 6px;
+    }
+
+    .c-line {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .c-line.pass {
+      color: var(--green);
+    }
+
+    .c-line.fail {
+      color: #ff6b6b;
+    }
+
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+      flex-shrink: 0;
+    }
+
+    .run-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 18px;
+      background: var(--teal);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .run-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .run-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .reset-btn {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.45);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .reset-btn:hover {
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .test-badge {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
 
     /* RIGHT PANEL */
-    .right-panel { display: flex; flex-direction: column; background: var(--ink-2); overflow: hidden; }
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--ink-2);
+      overflow: hidden;
+    }
 
     /* Video */
-    .video-wrap { position: relative; background: #000; flex-shrink: 0; }
-    .video-el { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #0a0a0c; }
-    .video-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(10,10,14,0.8) 100%); pointer-events: none; }
-    .posture-badge { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0,0,0,0.55); backdrop-filter: blur(10px); border-radius: 100px; font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.08); }
-    .p-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
-    .vc-row { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .vc-btn { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); transition: all 0.18s; }
-    .vc-btn:hover { background: rgba(255,255,255,0.25); }
-    .vc-btn.muted { background: rgba(200,80,42,0.8); }
-    .vc-btn.recording { background: rgba(200,80,42,0.9); box-shadow: 0 0 0 3px rgba(200,80,42,0.35); animation: rec-pulse 1.2s ease-in-out infinite; }
-    @keyframes rec-pulse { 0%,100%{box-shadow:0 0 0 3px rgba(200,80,42,0.35)} 50%{box-shadow:0 0 0 8px rgba(200,80,42,0.1)} }
+    .video-wrap {
+      position: relative;
+      background: #000;
+      flex-shrink: 0;
+    }
+
+    .video-el {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+      background: #0a0a0c;
+    }
+
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(10, 10, 14, 0.8) 100%);
+      pointer-events: none;
+    }
+
+    .posture-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(10px);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .p-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .vc-row {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .vc-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      transition: all 0.18s;
+    }
+
+    .vc-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .vc-btn.muted {
+      background: rgba(200, 80, 42, 0.8);
+    }
+
+    .vc-btn.recording {
+      background: rgba(200, 80, 42, 0.9);
+      box-shadow: 0 0 0 3px rgba(200, 80, 42, 0.35);
+      animation: rec-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes rec-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 3px rgba(200, 80, 42, 0.35)
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(200, 80, 42, 0.1)
+      }
+    }
 
     /* Chat */
-    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .chat-header { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .chat-hdr-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
-    .q-badge { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.3); }
-    .messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-    .messages::-webkit-scrollbar { width: 3px; }
-    .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
-    .msg-ai-lbl { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.06em; margin-bottom: 5px; }
-    .msg-ai { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px 12px 12px 12px; padding: 12px 14px; font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.8); }
-    .msg-user { background: rgba(200,80,42,0.12); border: 1px solid rgba(200,80,42,0.2); border-radius: 12px 4px 12px 12px; padding: 12px 14px; font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.75); align-self: flex-end; max-width: 90%; }
-    .thinking { display: flex; align-items: center; gap: 6px; padding: 12px 14px; }
-    .t-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); }
-    .t-dot:nth-child(1){animation:th 1.2s 0s infinite}
-    .t-dot:nth-child(2){animation:th 1.2s 0.2s infinite}
-    .t-dot:nth-child(3){animation:th 1.2s 0.4s infinite}
-    @keyframes th { 0%,80%,100%{transform:scale(0.6);opacity:.3} 40%{transform:scale(1);opacity:1} }
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-hdr-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .q-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .msg-ai-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+
+    .msg-ai {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px 12px 12px 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .msg-user {
+      background: rgba(200, 80, 42, 0.12);
+      border: 1px solid rgba(200, 80, 42, 0.2);
+      border-radius: 12px 4px 12px 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.75);
+      align-self: flex-end;
+      max-width: 90%;
+    }
+
+    .thinking {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 14px;
+    }
+
+    .t-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .t-dot:nth-child(1) {
+      animation: th 1.2s 0s infinite
+    }
+
+    .t-dot:nth-child(2) {
+      animation: th 1.2s 0.2s infinite
+    }
+
+    .t-dot:nth-child(3) {
+      animation: th 1.2s 0.4s infinite
+    }
+
+    @keyframes th {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0.6);
+        opacity: .3
+      }
+
+      40% {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
 
     /* VOICE INPUT */
-    .voice-input-area { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
-    .voice-row { display: flex; gap: 8px; align-items: flex-end; }
-    .answer-ta { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; color: rgba(255,255,255,0.85); font-family: var(--font-sans); font-size: 13px; line-height: 1.5; resize: none; outline: none; transition: border-color 0.18s; max-height: 80px; }
-    .answer-ta:focus { border-color: rgba(200,80,42,0.4); }
-    .answer-ta::placeholder { color: rgba(255,255,255,0.2); }
-    .answer-ta:disabled { opacity: 0.5; }
-    .voice-btn { width: 36px; height: 36px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: rgba(255,255,255,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; transition: all 0.18s; }
-    .voice-btn:hover { background: rgba(255,255,255,0.14); }
-    .voice-btn.active { background: rgba(200,80,42,0.8); border-color: var(--accent); color: #fff; animation: rec-pulse 1.2s ease-in-out infinite; }
-    .voice-btn:disabled { opacity: 0.35; cursor: not-allowed; animation: none; }
-    .send-btn { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; transition: all 0.18s; }
-    .send-btn:hover { background: var(--accent-2); }
-    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .voice-input-area {
+      padding: 10px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .voice-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .answer-ta {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: rgba(255, 255, 255, 0.85);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      transition: border-color 0.18s;
+      max-height: 80px;
+    }
+
+    .answer-ta:focus {
+      border-color: rgba(200, 80, 42, 0.4);
+    }
+
+    .answer-ta::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .answer-ta:disabled {
+      opacity: 0.5;
+    }
+
+    .voice-btn {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+      transition: all 0.18s;
+    }
+
+    .voice-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .voice-btn.active {
+      background: rgba(200, 80, 42, 0.8);
+      border-color: var(--accent);
+      color: #fff;
+      animation: rec-pulse 1.2s ease-in-out infinite;
+    }
+
+    .voice-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      animation: none;
+    }
+
+    .send-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+      transition: all 0.18s;
+    }
+
+    .send-btn:hover {
+      background: var(--accent-2);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     /* Status bar */
-    .status-bar { padding: 4px 12px 8px; flex-shrink: 0; }
-    .status-text { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.05em; min-height: 14px; transition: color 0.2s; }
-    .status-text.active { color: var(--accent-2); }
-    .status-text.ok { color: var(--green); }
+    .status-bar {
+      padding: 4px 12px 8px;
+      flex-shrink: 0;
+    }
+
+    .status-text {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.05em;
+      min-height: 14px;
+      transition: color 0.2s;
+    }
+
+    .status-text.active {
+      color: var(--accent-2);
+    }
+
+    .status-text.ok {
+      color: var(--green);
+    }
 
     /* Speaking indicator */
-    .speaking-badge { display: none; align-items: center; gap: 6px; padding: 3px 10px; background: rgba(0,184,120,0.15); border: 1px solid rgba(0,184,120,0.3); border-radius: 100px; font-family: var(--font-mono); font-size: 10px; color: var(--green); }
-    .speaking-badge.visible { display: flex; }
-    .s-bar { width: 3px; border-radius: 2px; background: var(--green); animation: sound 1s ease infinite; }
-    .s-bar:nth-child(1){height:8px;animation-delay:0s}
-    .s-bar:nth-child(2){height:14px;animation-delay:0.15s}
-    .s-bar:nth-child(3){height:10px;animation-delay:0.3s}
-    .s-bar:nth-child(4){height:6px;animation-delay:0.45s}
-    @keyframes sound { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+    .speaking-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: rgba(0, 184, 120, 0.15);
+      border: 1px solid rgba(0, 184, 120, 0.3);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--green);
+    }
 
-    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-    .fade-in { animation: fadeIn 0.3s ease both; }
-    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.75s linear infinite; }
-    @keyframes spin { to{transform:rotate(360deg)} }
+    .speaking-badge.visible {
+      display: flex;
+    }
 
-    @media (max-width: 700px) { .body { grid-template-columns: 1fr; } .right-panel { height: 300px; } }
+    .s-bar {
+      width: 3px;
+      border-radius: 2px;
+      background: var(--green);
+      animation: sound 1s ease infinite;
+    }
+
+    .s-bar:nth-child(1) {
+      height: 8px;
+      animation-delay: 0s
+    }
+
+    .s-bar:nth-child(2) {
+      height: 14px;
+      animation-delay: 0.15s
+    }
+
+    .s-bar:nth-child(3) {
+      height: 10px;
+      animation-delay: 0.3s
+    }
+
+    .s-bar:nth-child(4) {
+      height: 6px;
+      animation-delay: 0.45s
+    }
+
+    @keyframes sound {
+
+      0%,
+      100% {
+        transform: scaleY(0.4)
+      }
+
+      50% {
+        transform: scaleY(1)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease both;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @media (max-width: 700px) {
+      .body {
+        grid-template-columns: 1fr;
+      }
+
+      .right-panel {
+        height: 300px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
   <div class="header">
     <div class="h-left">
-      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="live-badge">
+        <div class="live-dot"></div>Live
+      </div>
       <span class="session-info" id="session-info">Loading…</span>
     </div>
     <div class="h-right">
@@ -153,7 +965,46 @@
     </div>
   </div>
 
-  <div class="body">
+  <div class="body" id="main-body">
+    <!-- Problem Panel (shown during coding round) -->
+    <div class="problem-panel" id="problem-panel">
+      <div class="problem-panel-header">
+        <span class="problem-panel-title">Problem</span>
+        <span class="problem-difficulty" id="problem-difficulty-badge" style="display:none;"></span>
+      </div>
+      <div class="problem-body" id="problem-body">
+        <!-- Waiting state -->
+        <div class="problem-waiting" id="problem-waiting">
+          <div class="problem-waiting-icon">⏳</div>
+          <div class="problem-waiting-text">Waiting for coding question…<br>The problem will appear here when the
+            interviewer presents it.</div>
+        </div>
+        <!-- Problem content (hidden until loaded) -->
+        <div id="problem-content" style="display:none; flex-direction:column; gap:14px;">
+          <div>
+            <div class="problem-section-label">Problem</div>
+            <div class="problem-title-text" id="prob-title"></div>
+          </div>
+          <div>
+            <div class="problem-section-label">Description</div>
+            <div class="problem-desc" id="prob-desc"></div>
+          </div>
+          <div>
+            <div class="problem-section-label">Input Format</div>
+            <div class="problem-format-block"><code id="prob-input"></code></div>
+          </div>
+          <div>
+            <div class="problem-section-label">Output Format</div>
+            <div class="problem-format-block"><code id="prob-output"></code></div>
+          </div>
+          <div>
+            <div class="problem-section-label">Examples</div>
+            <div class="problem-examples" id="prob-examples"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Code Editor -->
     <div class="editor-area">
       <div class="editor-topbar">
@@ -166,24 +1017,17 @@
           <button class="etab active" onclick="switchTab(this,'code')">solution.py</button>
           <button class="etab" onclick="switchTab(this,'notes')">notes.md</button>
         </div>
-        <select class="problem-sel" id="problem-sel"></select>
         <select class="lang-sel" id="lang-sel">
-          <option>Python</option><option>JavaScript</option><option>Java</option><option>C++</option>
+          <option>Python</option>
+          <option>JavaScript</option>
+          <option>Java</option>
+          <option>C++</option>
         </select>
-      </div>
-      <div class="challenge-card">
-        <div class="challenge-kicker">Coding Challenge</div>
-        <div class="challenge-title" id="problem-title">Loading challenge…</div>
-        <div class="challenge-meta">
-          <span class="challenge-pill" id="problem-difficulty">—</span>
-          <span class="challenge-pill" id="problem-input">—</span>
-          <span class="challenge-pill" id="problem-output">—</span>
-        </div>
-        <div class="challenge-desc" id="problem-desc">Loading test description…</div>
       </div>
       <div class="editor-main">
         <div class="line-nums" id="line-nums">1</div>
-        <textarea class="code-ta" id="code-ta" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="# Write your solution here…"></textarea>
+        <textarea class="code-ta" id="code-ta" spellcheck="false" autocomplete="off" autocorrect="off"
+          autocapitalize="off" placeholder="# Write your solution here…"></textarea>
       </div>
       <div class="console" id="console">
         <div class="console-lbl">Console Output</div>
@@ -201,10 +1045,12 @@
       <div class="video-wrap">
         <video class="video-el" id="video-el" autoplay playsinline muted></video>
         <div class="video-overlay"></div>
-        <div class="posture-badge"><div class="p-dot" id="p-dot"></div><span id="p-text">Checking…</span></div>
+        <div class="posture-badge">
+          <div class="p-dot" id="p-dot"></div><span id="p-text">Checking…</span>
+        </div>
         <div class="vc-row">
-          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mute mic"><img src="/static/assets/microphone_on.png" alt="Mic On" style="width:16px; height:16px;"></button>
-          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Toggle camera"><img src="/static/assets/video-on.png" alt="Cam On" style="width:16px; height:16px;"></button>
+          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mute mic"><img src="/static/assets/microphone_on.png" alt="Mic on" style="width:24px; height:24px;"></button>
+          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Toggle camera"><img src="/static/assets/video-on.png" alt="Cam on" style="width:24px; height:24px;"></button>
         </div>
       </div>
 
@@ -213,7 +1059,10 @@
           <span class="chat-hdr-title">AI Interviewer</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="speaking-badge" id="speaking-badge">
-              <div class="s-bar"></div><div class="s-bar"></div><div class="s-bar"></div><div class="s-bar"></div>
+              <div class="s-bar"></div>
+              <div class="s-bar"></div>
+              <div class="s-bar"></div>
+              <div class="s-bar"></div>
               Speaking
             </div>
             <span class="q-badge" id="q-badge">Q 1 / 5</span>
@@ -224,7 +1073,8 @@
 
         <div class="voice-input-area">
           <div class="voice-row">
-            <textarea class="answer-ta" id="answer-ta" rows="2" placeholder="Type your answer, or click 🎙 to speak…"></textarea>
+            <textarea class="answer-ta" id="answer-ta" rows="2"
+              placeholder="Type your answer, or click 🎙 to speak…"></textarea>
             <button class="voice-btn" id="voice-btn" onclick="toggleVoiceInput()" title="Hold to speak">🎙</button>
             <button class="send-btn" id="send-btn" onclick="sendAnswer()">↑</button>
           </div>
@@ -237,828 +1087,687 @@
   </div>
 
   <script>
-  // ── Session State ──────────────────────────────────────────────────────────
-  const sessionId    = localStorage.getItem('mm_session_id');
-  const firstQuestion = localStorage.getItem('mm_first_question');
-  const config       = JSON.parse(localStorage.getItem('mm_config') || '{}');
+    // ── Session State ──────────────────────────────────────────────────────────
+    const sessionId = localStorage.getItem('mm_session_id');
+    const firstQuestion = localStorage.getItem('mm_first_question');
+    const config = JSON.parse(localStorage.getItem('mm_config') || '{}');
 
-  const WHITEBOARD_PROBLEMS = [
-    {
-      id: 'two_sum',
-      title: 'Two Sum',
-      difficulty: 'Easy',
-      description: 'Return the indices of the two numbers that add up to the target.',
-      input_format: 'nums: list[int], target: int',
-      output_format: 'list[int]',
-      starter_code: 'def two_sum(nums, target):\n    pass\n',
-      test_cases: [
-        { label: 'Basic case', input: [[2, 7, 11, 15], 9], expected: [0, 1] },
-        { label: 'Middle pair', input: [[3, 2, 4], 6], expected: [1, 2] },
-      ],
-    },
-    {
-      id: 'palindrome_check',
-      title: 'Palindrome Check',
-      difficulty: 'Easy',
-      description: 'Check whether a string reads the same forwards and backwards.',
-      input_format: 's: str',
-      output_format: 'bool',
-      starter_code: 'def is_palindrome(s):\n    pass\n',
-      test_cases: [
-        { label: 'Palindrome', input: 'racecar', expected: true },
-        { label: 'Not a palindrome', input: 'hello', expected: false },
-      ],
-    },
-  ];
+    // ── Initialize Interview ──────────────────────────────────────────
+    let questionNum = 1;
+    let totalQuestions = 5;  // Will be updated from server on start
+    let scores = [];
+    let elapsedSeconds = 0;
+    let timerInterval = null;
+    let camStream = null;
+    let micMuted = false;
+    let camOff = false;
 
-  const WHITEBOARD_PROBLEM_KEY = 'mm_whiteboard_problem_id';
-  const WHITEBOARD_CODE_PREFIX = 'mm_whiteboard_code_';
+    // Voice recording state
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let micStream = null;  // dedicated stream for STT (separate from camera stream)
 
-  // ── Initialize Interview ──────────────────────────────────────────
-  let questionNum    = 1;
-  let totalQuestions = 5;  // Will be updated from server on start
-  let scores         = [];
-  let elapsedSeconds = 0;
-  let timerInterval  = null;
-  let camStream      = null;
-  let micMuted       = false;
-  let camOff         = false;
+    // ── Init ───────────────────────────────────────────────────────────────────
+    document.getElementById('session-info').textContent = config.label || 'Interview Session';
 
-  // Voice recording state
-  let mediaRecorder  = null;
-  let audioChunks    = [];
-  let isRecording    = false;
-  let micStream      = null;  // dedicated stream for STT (separate from camera stream)
-
-  let cameraConfidences = [];  // collect posture scores
-
-  let currentProblemIndex = 0;
-  let currentProblem = WHITEBOARD_PROBLEMS[0];
-
-  // ── Init ───────────────────────────────────────────────────────────────────
-  document.getElementById('session-info').textContent = config.label || 'Interview Session';
-
-  const ta = document.getElementById('code-ta');
-  const problemSelect = document.getElementById('problem-sel');
-
-  initCodingWorkspace();
-
-  startTimer();
-  initCamera();
-
-  // Retrieve total_questions from localStorage if available (from earlier fetch)
-  // Otherwise it was hardcoded to 5 above
-  const storedTotal = localStorage.getItem('mm_total_questions');
-  if (storedTotal) {
-    totalQuestions = parseInt(storedTotal);
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-    console.log(`[${timestamp}] ℹ️ [SETUP] Total questions fetched from server: ${totalQuestions}`);
-  }
-
-  function initCodingWorkspace() {
-    populateProblemSelector();
-
-    const savedProblemId = localStorage.getItem(WHITEBOARD_PROBLEM_KEY);
-    const savedIndex = WHITEBOARD_PROBLEMS.findIndex(p => p.id === savedProblemId);
-    currentProblemIndex = savedIndex >= 0 ? savedIndex : 0;
-    currentProblem = WHITEBOARD_PROBLEMS[currentProblemIndex];
-    problemSelect.value = currentProblem.id;
-
-    loadProblem(currentProblem, true);
-
-    ta.addEventListener('input', handleCodeInput);
-    ta.addEventListener('paste', handleCodePaste);
-    ta.addEventListener('keydown', handleCodeKeydown);
-    problemSelect.addEventListener('change', handleProblemChange);
-  }
-
-  function populateProblemSelector() {
-    problemSelect.innerHTML = WHITEBOARD_PROBLEMS.map(problem => `
-      <option value="${problem.id}">${problem.title}</option>
-    `).join('');
-  }
-
-  function problemStorageKey(problemId) {
-    return `${WHITEBOARD_CODE_PREFIX}${problemId}`;
-  }
-
-  function saveCurrentCode() {
-    if (!currentProblem) return;
-    localStorage.setItem(problemStorageKey(currentProblem.id), ta.value);
-    localStorage.setItem(WHITEBOARD_PROBLEM_KEY, currentProblem.id);
-  }
-
-  function getSavedCode(problemId) {
-    return localStorage.getItem(problemStorageKey(problemId)) || '';
-  }
-
-  function loadProblem(problem, useSavedDraft = true) {
-    currentProblem = problem;
-    document.getElementById('problem-title').textContent = problem.title;
-    document.getElementById('problem-difficulty').textContent = problem.difficulty;
-    document.getElementById('problem-input').textContent = problem.input_format;
-    document.getElementById('problem-output').textContent = problem.output_format;
-    document.getElementById('problem-desc').textContent = problem.description;
-    document.getElementById('code-ta').placeholder = `# Solve ${problem.title} here…`;
-    document.getElementById('line-nums').innerHTML = '1';
-
-    const savedCode = useSavedDraft ? getSavedCode(problem.id) : '';
-    ta.value = savedCode || problem.starter_code;
+    const ta = document.getElementById('code-ta');
+    ta.value = 'def solution():\n    # Write your solution here\n    pass\n';
     updateLineNums();
-  }
 
-  function handleProblemChange() {
-    saveCurrentCode();
-    const selectedId = problemSelect.value;
-    const nextProblem = WHITEBOARD_PROBLEMS.find(problem => problem.id === selectedId) || WHITEBOARD_PROBLEMS[0];
-    currentProblemIndex = WHITEBOARD_PROBLEMS.findIndex(problem => problem.id === nextProblem.id);
-    loadProblem(nextProblem, true);
-  }
+    startTimer();
+    initCamera();
 
-  function handleCodeInput() {
-    updateLineNums();
-    saveCurrentCode();
-  }
+    // Retrieve total_questions from localStorage if available (from earlier fetch)
+    // Otherwise it was hardcoded to 5 above
+    const storedTotal = localStorage.getItem('mm_total_questions');
+    if (storedTotal) {
+      totalQuestions = parseInt(storedTotal);
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      console.log(`[${timestamp}] ℹ️ [SETUP] Total questions fetched from server: ${totalQuestions}`);
+    }
 
-  function normalizePastedCode(rawText) {
-    if (!rawText) return '';
-
-    let text = String(rawText)
-      .replace(/\r\n?/g, '\n')
-      .replace(/\u00a0/g, ' ')
-      .replace(/[\u200b\u200c\u200d\ufeff]/g, '');
-
-    const fencedMatch = text.match(/```(?:[\w#+.-]+)?\n([\s\S]*?)\n```/);
-    if (fencedMatch) {
-      text = fencedMatch[1];
+    // Display first question and speak it
+    if (firstQuestion) {
+      addAIMessage(firstQuestion, 1);
+      speakText(firstQuestion);
     } else {
-      const trimmed = text.trim();
-      if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-        text = trimmed.split('\n').slice(1, -1).join('\n');
+      setStatus('No session found — go back to the landing page.', '');
+    }
+
+    async function loadCodingProblem() {
+      try {
+        const res = await fetch(`/api/coding/problem?session_id=${sessionId}`);
+        const problem = await res.json();
+
+        // Populate the problem panel
+        document.getElementById('problem-waiting').style.display = 'none';
+        document.getElementById('problem-content').style.display = 'flex';
+
+        document.getElementById('prob-title').textContent = problem.title;
+        document.getElementById('prob-desc').textContent = problem.description;
+        document.getElementById('prob-input').textContent = problem.input_format;
+        document.getElementById('prob-output').textContent = problem.output_format;
+
+        const badge = document.getElementById('problem-difficulty-badge');
+        badge.textContent = problem.difficulty;
+        badge.className = `problem-difficulty ${(problem.difficulty || '').toLowerCase()}`;
+        badge.style.display = 'inline-block';
+
+        const examplesEl = document.getElementById('prob-examples');
+        examplesEl.innerHTML = '';
+        (problem.test_cases || []).forEach((tc, i) => {
+          examplesEl.innerHTML += `
+            <div class="example-block">
+              <div class="ex-label">Example ${i + 1}</div>
+              <div class="ex-row"><span class="label">Input&nbsp;&nbsp;</span>${esc(String(tc.input))}</div>
+              <div class="ex-row"><span class="label">Output&nbsp;</span>${esc(String(tc.expected))}</div>
+            </div>`;
+        });
+
+        document.getElementById('code-ta').value = problem.starter_code || 'def solution():\n    pass\n';
+        updateLineNums();
+
+        const consoleEl = document.getElementById('console');
+        consoleEl.innerHTML = '<div class="console-lbl">Example Test Cases</div>';
+        (problem.test_cases || []).forEach((tc, i) => {
+          consoleEl.innerHTML += `<div class="c-line">Example ${i + 1}: Input ${esc(String(tc.input))} → ${esc(String(tc.expected))}</div>`;
+        });
+
+      } catch (e) {
+        console.error('Failed to load coding problem:', e);
       }
     }
 
-    text = text
-      .replace(/^> ?/gm, '')
-      .replace(/^\s*(python|py|javascript|js|java|cpp|c\+\+|typescript|ts)\s*$/i, '')
-      .replace(/^\s*\d+\.?\s+/gm, '');
-
-    const lines = text.split('\n');
-    const nonEmpty = lines.filter(line => line.trim());
-    const indents = nonEmpty
-      .map(line => (line.match(/^\s*/)?.[0].length || 0))
-      .filter(indent => indent > 0);
-
-    if (indents.length && indents.length === nonEmpty.length) {
-      const dedentBy = Math.min(...indents);
-      if (dedentBy > 0) {
-      text = lines.map(line => line.slice(dedentBy)).join('\n');
-      }
+    // ── Timer ──────────────────────────────────────────────────────────────────
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+        const s = String(elapsedSeconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `${m}:${s}`;
+      }, 1000);
     }
 
-    return text.trimEnd();
-  }
-
-  function insertTextAtCursor(text) {
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    ta.setRangeText(text, start, end, 'end');
-    handleCodeInput();
-  }
-
-  function handleCodePaste(event) {
-    const pasted = event.clipboardData?.getData('text/plain') || '';
-    const cleaned = normalizePastedCode(pasted);
-    if (!cleaned) return;
-    event.preventDefault();
-    insertTextAtCursor(cleaned);
-  }
-
-  function handleCodeKeydown(event) {
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      insertTextAtCursor('    ');
-    }
-  }
-
-  // Display first question and speak it
-  if (firstQuestion) {
-    addAIMessage(firstQuestion, 1);
-    speakText(firstQuestion);
-  } else {
-    setStatus('No session found — go back to the landing page.', '');
-  }
-
-  // ── Timer ──────────────────────────────────────────────────────────────────
-  function startTimer() {
-    timerInterval = setInterval(() => {
-      elapsedSeconds++;
-      const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
-      const s = String(elapsedSeconds % 60).padStart(2, '0');
-      document.getElementById('timer').textContent = `${m}:${s}`;
-    }, 1000);
-  }
-
-  // ── Camera ─────────────────────────────────────────────────────────────────
-  async function initCamera() {
-    try {
-      camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      document.getElementById('video-el').srcObject = camStream;
-      startPostureCheck();
-    } catch(e) {
-      document.getElementById('p-text').textContent = 'Camera off';
-      document.getElementById('p-dot').style.background = '#ff6b6b';
-    }
-  }
-
-  function toggleMic() {
-    micMuted = !micMuted;
-    const btn = document.getElementById('mic-btn');
-    btn.innerHTML = micMuted ? '<img src="/static/assets/microphone_off.png" alt="Mic Off" style="width:16px; height:16px;">' : '<img src="/static/assets/microphone_on.png" alt="Mic On" style="width:16px; height:16px;">';
-    btn.classList.toggle('muted', micMuted);
-  }
-
-  async function toggleCam() {
-    camOff = !camOff;
-    const btn = document.getElementById('cam-btn');
-    btn.innerHTML = camOff ? '<img src="/static/assets/video-off.png" alt="Cam Off" style="width:16px; height:16px;">' : '<img src="/static/assets/video-on.png" alt="Cam On" style="width:16px; height:16px;">';
-    btn.classList.toggle('muted', camOff);
-    if (camOff) {
-      // Turn off camera
-      if (camStream) {
-        camStream.getTracks().forEach(track => track.stop());
-        camStream = null;
-      }
-      document.getElementById('video-el').srcObject = null;
-      document.getElementById('p-text').textContent = 'Camera off';
-      document.getElementById('p-dot').style.background = '#ff6b6b';
-    } else {
-      // Turn on camera
+    // ── Camera ─────────────────────────────────────────────────────────────────
+    async function initCamera() {
       try {
         camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         document.getElementById('video-el').srcObject = camStream;
         startPostureCheck();
-      } catch(e) {
+      } catch (e) {
         document.getElementById('p-text').textContent = 'Camera off';
         document.getElementById('p-dot').style.background = '#ff6b6b';
-        camOff = true; // revert
-        btn.innerHTML = '<img src="/static/assets/video-off.png" alt="Cam Off" style="width:16px; height:16px;">';
-        btn.classList.toggle('muted', true);
       }
     }
-  }
 
-  // ── Camera Analyzer State ──────────────────────────────────────────────────
-  let cameraAnalyzer = null;
-  let violationStats = {
-    poseNotUpright: 0,
-    notLooking: 0,
-    faceNotCentered: 0,
-    total: 0,
-  };
-
-  function startPostureCheck() {
-    // Initialize camera analyzer
-    const videoEl = document.getElementById('video-el');
-    
-    cameraAnalyzer = new CameraAnalyzer(videoEl, (data) => {
-      const { state, violations } = data;
-      violationStats = violations;
-      
-      // Collect posture score
-      const postureScore = (state.poseIsUpright && state.isLooking && state.faceCentered) ? 10 : 0;
-      cameraConfidences.push(postureScore);
-      
-      // Update UI badge
-      const pDot = document.getElementById('p-dot');
-      const pText = document.getElementById('p-text');
-      
-      let statusText = '';
-      let statusColor = '#00b878'; // green
-      
-      if (!state.poseIsUpright) {
-        statusText = 'Sit up straight';
-        statusColor = '#f5a623'; // orange
-      } else if (!state.isLooking) {
-        statusText = 'Look at camera';
-        statusColor = '#f5a623';
-      } else if (!state.faceCentered) {
-        statusText = 'Center your face';
-        statusColor = '#f5a623';
-      } else {
-        statusText = 'Posture good';
-        statusColor = '#00b878';
-      }
-      
-      pDot.style.background = statusColor;
-      pText.textContent = statusText;
-      
-      // Log violations
-      console.log(`[POSE ANALYZER] Upright=${state.poseIsUpright}, Looking=${state.isLooking}, Centered=${state.faceCentered} | Total violations: ${violations.total}`);
-    });
-    
-    // Initialize analyzer
-    cameraAnalyzer.init().catch((error) => {
-      console.error('Failed to initialize camera analyzer:', error);
-      document.getElementById('p-text').textContent = 'Camera unavailable';
-      document.getElementById('p-dot').style.background = '#ff6b6b';
-    });
-  }
-
-  // ── TTS: speak text via server ─────────────────────────────────────────────
-  async function speakText(text) {
-    if (!text) return;
-    const safeText = String(text);
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-    console.log(`[${timestamp}] 🎙 [MODEL SPEAKING] TTS request: ${safeText.substring(0, 80)}${safeText.length > 80 ? '...' : ''}`);
-    setSpeaking(true);
-    setStatus('Speaking…', 'active');
-
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: safeText }),
-      });
-
-      if (!res.ok) throw new Error('TTS failed');
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      console.log(`[${timestamp}] ✓ Audio blob created (${blob.size} bytes), preparing playback`);
-
-      await new Promise((resolve, reject) => {
-        audio.onplay = () => console.log(`[${timestamp}] ▶ Audio playback started`);
-        audio.onended = () => { 
-          console.log(`[${timestamp}] ✓ Audio playback finished`);
-          URL.revokeObjectURL(url); 
-          resolve(); 
-        };
-        audio.onerror = reject;
-        audio.play().catch(reject);
-      });
-    } catch(e) {
-      console.warn(`[${timestamp}] ✗ TTS error:`, e);
-    } finally {
-      setSpeaking(false);
-      setStatus('Your turn — speak or type your answer', 'ok');
-      // Auto-start recording after AI finishes speaking
-      if (!micMuted) startVoiceRecording();
-    }
-  }
-
-  // ── STT: auto-record with silence detection → auto-submit ─────────────────
-  // Mirrors stt.py: raised sensitivity to better capture quiet input
-  const SILENCE_THRESHOLD = 0.002;
-  const SILENCE_DURATION  = 1500;   // ms
-  const MAX_DURATION      = 22000;  // ms
-
-  let silenceTimer    = null;
-  let maxDurTimer     = null;
-  let audioCtx        = null;
-  let analyserNode    = null;
-  let silenceWatcher  = null;
-
-  async function toggleVoiceInput() {
-    if (isRecording) {
-      stopVoiceRecording();
-    } else {
-      startVoiceRecording();
-    }
-  }
-
-  async function startVoiceRecording() {
-    if (isRecording) return;
-
-    try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch(e) {
-      setStatus('Microphone access denied', '');
-      return;
+    function toggleMic() {
+      micMuted = !micMuted;
+      const btn = document.getElementById('mic-btn');
+      btn.innerHTML = micMuted ? '<img src="/static/assets/microphone_off.png" alt="Mic off" style="width:24px; height:24px;">' : '<img src="/static/assets/microphone_on.png" alt="Mic on" style="width:24px; height:24px;">';
+      btn.classList.toggle('muted', micMuted);
     }
 
-    // ── MediaRecorder setup ──────────────────────────────────────────────────
-    audioChunks = [];
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-    mediaRecorder = mimeType
-      ? new MediaRecorder(micStream, { mimeType })
-      : new MediaRecorder(micStream);
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = processRecording;
-    mediaRecorder.start(250);
+    function toggleCam() {
+      camOff = !camOff;
+      document.getElementById('cam-btn').innerHTML = camOff ? '<img src="/static/assets/video-off.png" alt="Cam off" style="width:24px; height:24px;">' : '<img src="/static/assets/video-on.png" alt="Cam on" style="width:24px; height:24px;">';
+      if (camStream) camStream.getVideoTracks().forEach(t => t.enabled = !camOff);
+    }
 
-    // ── Web Audio silence detector (mirrors stt.py logic) ───────────────────
-    audioCtx     = new (window.AudioContext || window.webkitAudioContext)();
-    analyserNode = audioCtx.createAnalyser();
-    analyserNode.fftSize = 512;
-    const src = audioCtx.createMediaStreamSource(micStream);
-    src.connect(analyserNode);
-    const buf = new Float32Array(analyserNode.fftSize);
+    // ── Camera Analyzer State ──────────────────────────────────────────────────
+    let cameraAnalyzer = null;
+    let violationStats = {
+      poseNotUpright: 0,
+      notLooking: 0,
+      faceNotCentered: 0,
+      total: 0,
+    };
 
-    let silenceStart = null;
-    silenceWatcher = setInterval(() => {
-      analyserNode.getFloatTimeDomainData(buf);
-      // RMS amplitude — same formula as np.linalg.norm / len in stt.py
-      const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+    function startPostureCheck() {
+      // Initialize camera analyzer
+      const videoEl = document.getElementById('video-el');
 
-      console.debug(`🎙 RMS=${rms.toFixed(6)} thr=${SILENCE_THRESHOLD}`);
-      console.debug(`🎙 RMS=${rms.toFixed(6)} thr=${SILENCE_THRESHOLD}`);
-      if (rms < SILENCE_THRESHOLD) {
-        if (silenceStart === null) silenceStart = Date.now();
-        else if (Date.now() - silenceStart >= SILENCE_DURATION) {
-          setStatus('Silence detected — processing…', 'active');
-          stopVoiceRecording();
+      cameraAnalyzer = new CameraAnalyzer(videoEl, (data) => {
+        const { state, violations } = data;
+        violationStats = violations;
+
+        // Update UI badge
+        const pDot = document.getElementById('p-dot');
+        const pText = document.getElementById('p-text');
+
+        let statusText = '';
+        let statusColor = '#00b878'; // green
+
+        if (!state.poseIsUpright) {
+          statusText = 'Sit up straight';
+          statusColor = '#f5a623'; // orange
+        } else if (!state.isLooking) {
+          statusText = 'Look at camera';
+          statusColor = '#f5a623';
+        } else if (!state.faceCentered) {
+          statusText = 'Center your face';
+          statusColor = '#f5a623';
+        } else {
+          statusText = 'Posture good';
+          statusColor = '#00b878';
         }
-      } else {
-        silenceStart = null;
-      }
-    }, 100);
 
-    // Safety max-duration limit
-    maxDurTimer = setTimeout(() => {
-      if (isRecording) {
-        setStatus('Max duration reached — processing…', 'active');
-        stopVoiceRecording();
-      }
-    }, MAX_DURATION);
+        pDot.style.background = statusColor;
+        pText.textContent = statusText;
 
-    isRecording = true;
-    document.getElementById('voice-btn').classList.add('active');
-    document.getElementById('voice-btn').textContent = '⏹';
-    setStatus('Listening… (will auto-submit on silence)', 'active');
-  }
-
-  function stopVoiceRecording() {
-    if (!isRecording || !mediaRecorder) return;
-
-    clearInterval(silenceWatcher);
-    clearTimeout(maxDurTimer);
-    audioCtx?.close();
-    silenceWatcher = null;
-    audioCtx       = null;
-
-    mediaRecorder.stop();
-    micStream?.getTracks().forEach(t => t.stop());
-    isRecording = false;
-
-    document.getElementById('voice-btn').classList.remove('active');
-    document.getElementById('voice-btn').textContent = '🎙';
-    setStatus('Processing speech…', 'active');
-  }
-
-  async function processRecording() {
-    if (audioChunks.length === 0) { setStatus('', ''); return; }
-
-    const mimeType   = mediaRecorder?.mimeType || 'audio/webm';
-    const blob       = new Blob(audioChunks, { type: mimeType });
-
-    try {
-      const res        = await fetch('/api/stt', {
-        method:  'POST',
-        headers: { 'Content-Type': mimeType },
-        body:    blob,
+        // Log violations
+        console.log(`[POSE ANALYZER] Upright=${state.poseIsUpright}, Looking=${state.isLooking}, Centered=${state.faceCentered} | Total violations: ${violations.total}`);
       });
-      const data       = await res.json();
-      const transcript = data.transcript || '';
 
-      if (transcript) {
-        // Show transcript briefly in the input, then auto-submit
-        document.getElementById('answer-ta').value = transcript;
-        setStatus(`Heard: "${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"`, 'ok');
-        // Small delay so the user can see what was captured
-        await new Promise(r => setTimeout(r, 600));
-        sendAnswer(transcript);
-      } else {
-        setStatus('No speech detected — speak again or type your answer', '');
-        // Re-start listening so the user doesn\'t have to click
+      // Initialize analyzer
+      cameraAnalyzer.init().catch((error) => {
+        console.error('Failed to initialize camera analyzer:', error);
+        document.getElementById('p-text').textContent = 'Camera unavailable';
+        document.getElementById('p-dot').style.background = '#ff6b6b';
+      });
+    }
+
+    // ── TTS: speak text via server ─────────────────────────────────────────────
+    async function speakText(text) {
+      if (!text) return;
+      const safeText = String(text);
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      console.log(`[${timestamp}] 🎙 [MODEL SPEAKING] TTS request: ${safeText.substring(0, 80)}${safeText.length > 80 ? '...' : ''}`);
+      setSpeaking(true);
+      setStatus('Speaking…', 'active');
+
+      try {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: safeText }),
+        });
+
+        if (!res.ok) throw new Error('TTS failed');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        console.log(`[${timestamp}] ✓ Audio blob created (${blob.size} bytes), preparing playback`);
+
+        await new Promise((resolve, reject) => {
+          audio.onplay = () => console.log(`[${timestamp}] ▶ Audio playback started`);
+          audio.onended = () => {
+            console.log(`[${timestamp}] ✓ Audio playback finished`);
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          audio.onerror = reject;
+          audio.play().catch(reject);
+        });
+      } catch (e) {
+        console.warn(`[${timestamp}] ✗ TTS error:`, e);
+      } finally {
+        setSpeaking(false);
+        setStatus('Your turn — speak or type your answer', 'ok');
+        // Auto-start recording after AI finishes speaking
         if (!micMuted) startVoiceRecording();
       }
-    } catch(e) {
-      setStatus('STT error — type your answer manually', '');
-    }
-  }
-
-  // ── Chat ───────────────────────────────────────────────────────────────────
-  function addAIMessage(text, num) {
-    const c = document.getElementById('messages');
-    const d = document.createElement('div');
-    d.className = 'fade-in';
-    d.innerHTML = `<div class="msg-ai-lbl">Interviewer · Q${num}</div><div class="msg-ai">${esc(text)}</div>`;
-    c.appendChild(d);
-    scrollMessages();
-  }
-
-  function addUserMessage(text) {
-    const c = document.getElementById('messages');
-    const d = document.createElement('div');
-    d.innerHTML = `<div class="msg-user">${esc(text)}</div>`;
-    c.appendChild(d);
-    scrollMessages();
-  }
-
-  function showThinking() {
-    const c = document.getElementById('messages');
-    const d = document.createElement('div');
-    d.id = 'thinking';
-    d.className = 'thinking';
-    d.innerHTML = `<div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>`;
-    c.appendChild(d);
-    scrollMessages();
-  }
-
-  function removeThinking() { document.getElementById('thinking')?.remove(); }
-
-  function scrollMessages() {
-    const c = document.getElementById('messages');
-    c.scrollTop = c.scrollHeight;
-  }
-
-  // ── Send Answer ────────────────────────────────────────────────────────────
-  // `directAnswer` is passed by processRecording (voice path);
-  // when undefined, the text is read from the textarea (keyboard path).
-  async function sendAnswer(directAnswer) {
-    // Stop any active recording first
-    if (isRecording) stopVoiceRecording();
-
-    const taEl   = document.getElementById('answer-ta');
-    const answer = directAnswer !== undefined ? directAnswer : taEl.value.trim();
-    if (!answer) return;
-
-    // Calculate average camera confidence
-    let camera_confidence = null;
-    if (cameraConfidences.length > 0) {
-      camera_confidence = cameraConfidences.reduce((a, b) => a + b, 0) / cameraConfidences.length;
     }
 
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-    console.log(`[${timestamp}] 🔄 [SEND ANSWER] Submitting answer for Q${questionNum}: "${answer.substring(0, 60)}${answer.length > 60 ? '...' : ''}"`);
+    // ── STT: auto-record with silence detection → auto-submit ─────────────────
+    // Mirrors stt.py: SILENCE_THRESHOLD=0.01, SILENCE_DURATION=2s, MAX_DURATION=20s
+    const SILENCE_THRESHOLD = 0.01;
+    const SILENCE_DURATION = 2000;   // ms
+    const MAX_DURATION = 20000;  // ms
 
-    const sendBtn  = document.getElementById('send-btn');
-    const voiceBtn = document.getElementById('voice-btn');
-    sendBtn.disabled  = true;
-    voiceBtn.disabled = true;
-    taEl.disabled     = true;
+    let silenceTimer = null;
+    let maxDurTimer = null;
+    let audioCtx = null;
+    let analyserNode = null;
+    let silenceWatcher = null;
 
-    addUserMessage(answer);
-    taEl.value = '';
-    showThinking();
-    setStatus('Evaluating your answer…', 'active');
+    async function toggleVoiceInput() {
+      if (isRecording) {
+        stopVoiceRecording();
+      } else {
+        startVoiceRecording();
+      }
+    }
 
-    try {
-      const res = await fetch('/api/interview/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id:   sessionId,
-          answer,
-          question_num: questionNum,
-          camera_confidence,
-        }),
-      });
+    async function startVoiceRecording() {
+      if (isRecording) return;
 
-      const rawBody = await res.text();
-      let data;
       try {
-        data = JSON.parse(rawBody);
-      } catch (parseErr) {
-        throw new Error(`Non-JSON response (${res.status}): ${rawBody.slice(0, 180)}`);
-      }
-      removeThinking();
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-
-      const resp = data.response || {};
-      const followUpText = typeof resp.follow_up === 'string' ? resp.follow_up : (resp.follow_up != null ? String(resp.follow_up) : '');
-      const transitionText = typeof resp.transition === 'string' ? resp.transition : (resp.transition != null ? String(resp.transition) : '');
-      const questionText = typeof resp.question === 'string' ? resp.question : (resp.question != null ? String(resp.question) : '');
-      console.log(`[${timestamp}] 📨 [RESPONSE] should_follow_up=${resp.should_follow_up}, has_follow_up=${!!resp.follow_up}, next_question=${!!resp.question}`);
-
-      // Collect score
-      if (resp.evaluation?.score != null) scores.push(resp.evaluation.score);
-
-      // If follow-up needed, speak and display it (recording restarts after TTS)
-      if (resp.should_follow_up && followUpText && !resp.session_complete) {
-        const tsFollow = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-        console.log(`[${tsFollow}] 📍 [FOLLOW-UP] Question still Q${questionNum} (follow-up detected, returning early)`);
-        addAIMessage(followUpText, questionNum);
-        await speakText(followUpText);
-        // Don't increment questionNum for follow-ups
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        setStatus('Microphone access denied', '');
         return;
       }
 
-      const oldQ = questionNum;
-      questionNum++;
-      const displayQ = Math.min(questionNum, totalQuestions);
-      const tsUpdate = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-      console.log(`[${tsUpdate}] 📊 [QUESTION UPDATE] Q${oldQ} → Q${questionNum} (badge updated)`);
-      document.getElementById('q-badge').textContent = `Q ${displayQ} / ${totalQuestions}`;
+      // ── MediaRecorder setup ──────────────────────────────────────────────────
+      audioChunks = [];
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      mediaRecorder = mimeType
+        ? new MediaRecorder(micStream, { mimeType })
+        : new MediaRecorder(micStream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = processRecording;
+      mediaRecorder.start(250);
 
-      if (resp.session_complete || questionNum > totalQuestions) {
-        // Speak closing line then redirect
-        const closing = transitionText || "That concludes our interview. Thank you for your time!";
-        addAIMessage(closing, questionNum - 1);
-        await speakText(closing);
-        localStorage.setItem('mm_nlp_report', JSON.stringify(resp.nlp_report || {}));
-        goToReport();
-        return;
-      }
+      // ── Web Audio silence detector (mirrors stt.py logic) ───────────────────
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyserNode = audioCtx.createAnalyser();
+      analyserNode.fftSize = 512;
+      const src = audioCtx.createMediaStreamSource(micStream);
+      src.connect(analyserNode);
+      const buf = new Float32Array(analyserNode.fftSize);
 
-      localStorage.setItem('mm_nlp_report', JSON.stringify(resp.nlp_report || {}));
+      let silenceStart = null;
+      silenceWatcher = setInterval(() => {
+        analyserNode.getFloatTimeDomainData(buf);
+        // RMS amplitude — same formula as np.linalg.norm / len in stt.py
+        const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
 
-      // Speak transition if present
-      if (transitionText) {
-        const transDiv = document.createElement('div');
-        transDiv.className = 'fade-in';
-        transDiv.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:4px;letter-spacing:.06em;">Interviewer</div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:6px 10px;border-left:2px solid rgba(255,255,255,0.08);">${esc(transitionText)}</div>`;
-        document.getElementById('messages').appendChild(transDiv);
-        scrollMessages();
-        await speakText(transitionText);
-      }
+        if (rms < SILENCE_THRESHOLD) {
+          if (silenceStart === null) silenceStart = Date.now();
+          else if (Date.now() - silenceStart >= SILENCE_DURATION) {
+            setStatus('Silence detected — processing…', 'active');
+            stopVoiceRecording();
+          }
+        } else {
+          silenceStart = null;
+        }
+      }, 100);
 
-      // Display & speak next question (speakText auto-restarts recording when done)
-      if (questionText) {
-        addAIMessage(questionText, questionNum);
-        await speakText(questionText);
-      }
+      // Safety max-duration limit
+      maxDurTimer = setTimeout(() => {
+        if (isRecording) {
+          setStatus('Max duration reached — processing…', 'active');
+          stopVoiceRecording();
+        }
+      }, MAX_DURATION);
 
-    } catch(e) {
-      console.error('[SEND ANSWER ERROR]', e);
-      removeThinking();
-      const errMsg = e?.message ? String(e.message) : 'Unknown error';
-      setStatus(`Request failed: ${errMsg}`, '');
-      addAIMessage(`⚠ Request failed: ${esc(errMsg)}`, questionNum);
-    } finally {
-      sendBtn.disabled  = false;
-      voiceBtn.disabled = false;
-      taEl.disabled     = false;
+      isRecording = true;
+      document.getElementById('voice-btn').classList.add('active');
+      document.getElementById('voice-btn').textContent = '⏹';
+      setStatus('Listening… (will auto-submit on silence)', 'active');
     }
-  }
 
-  // Enter to send (Shift+Enter for newline)
-  document.getElementById('answer-ta').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendAnswer();
+    function stopVoiceRecording() {
+      if (!isRecording || !mediaRecorder) return;
+
+      clearInterval(silenceWatcher);
+      clearTimeout(maxDurTimer);
+      audioCtx?.close();
+      silenceWatcher = null;
+      audioCtx = null;
+
+      mediaRecorder.stop();
+      micStream?.getTracks().forEach(t => t.stop());
+      isRecording = false;
+
+      document.getElementById('voice-btn').classList.remove('active');
+      document.getElementById('voice-btn').textContent = '🎙';
+      setStatus('Processing speech…', 'active');
     }
-  });
 
-  // ── End / Report ───────────────────────────────────────────────────────────
-  function confirmEnd() {
-    if (confirm('End this interview session?')) goToReport();
-  }
+    async function processRecording() {
+      if (audioChunks.length === 0) { setStatus('', ''); return; }
 
-  function goToReport() {
-    clearInterval(timerInterval);
-    camStream?.getTracks().forEach(t => t.stop());
-    micStream?.getTracks().forEach(t => t.stop());
-    if (cameraAnalyzer) cameraAnalyzer.stop();
-    
-    localStorage.setItem('mm_scores', JSON.stringify(scores));
-    localStorage.setItem('mm_duration', elapsedSeconds);
-    localStorage.setItem('mm_violations', JSON.stringify(violationStats));
-    window.location.href = '/report';
-  }
+      const mimeType = mediaRecorder?.mimeType || 'audio/webm';
+      const blob = new Blob(audioChunks, { type: mimeType });
 
-  // ── UI helpers ─────────────────────────────────────────────────────────────
-  function setSpeaking(on) {
-    document.getElementById('speaking-badge').classList.toggle('visible', on);
-  }
-
-  function setStatus(msg, cls) {
-    const el = document.getElementById('status-text');
-    el.textContent = msg;
-    el.className = 'status-text' + (cls ? ' ' + cls : '');
-  }
-
-  function displayViolationStats() {
-    if (!violationStats || violationStats.total === 0) return;
-    const msg = `Violations: Posture ${violationStats.poseNotUpright} | Looking ${violationStats.notLooking} | Centering ${violationStats.faceNotCentered} (Total: ${violationStats.total})`;
-    console.log(`[VIOLATIONS] ${msg}`);
-    return msg;
-  }
-
-  // ── Editor ─────────────────────────────────────────────────────────────────
-  function updateLineNums() {
-    const lines = ta.value.split('\n');
-    document.getElementById('line-nums').innerHTML = lines.map((_, i) => i + 1).join('<br>');
-  }
-
-  function resetCode() {
-    if (!currentProblem) return;
-    localStorage.removeItem(problemStorageKey(currentProblem.id));
-    ta.value = currentProblem.starter_code;
-    handleCodeInput();
-  }
-
-  function esc(s) {
-    return String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function switchTab(btn, tab) {
-    document.querySelectorAll('.etab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-
-  function valueToText(value) {
-    if (typeof value === 'string') return value;
-    try {
-      return JSON.stringify(value);
-    } catch (error) {
-      return String(value);
-    }
-  }
-
-  function renderConsole(lines) {
-    const consoleEl = document.getElementById('console');
-    const rows = lines.length
-      ? lines.map(line => `<div class="c-line ${line.cls || ''}">${esc(line.text)}</div>`).join('')
-      : '<div class="c-line info">Run code to see output…</div>';
-
-    consoleEl.innerHTML = `<div class="console-lbl">Console Output</div>${rows}`;
-  }
-
-  function renderRunResults(data) {
-    const results = data.results || [];
-    const passed = results.filter(result => result.passed).length;
-    const total = results.length;
-    const summary = total
-      ? `${passed}/${total} tests passed · ${Math.round((data.pass_rate || 0) * 100)}%`
-      : 'No tests available';
-
-    const lines = [
-      { cls: 'summary', text: summary },
-      { cls: 'info', text: `Complexity: time ${data.complexity?.time || 'Unknown'} | space ${data.complexity?.space || 'Unknown'}` },
-    ];
-
-    results.forEach(result => {
-      lines.push({
-        cls: result.passed ? 'pass' : 'fail',
-        text: `${result.passed ? 'PASS' : 'FAIL'} · ${result.label}`,
-      });
-
-      if (!result.passed && result.error) {
-        lines.push({ cls: 'fail', text: `  Error: ${result.error}` });
-      } else if (!result.passed) {
-        lines.push({
-          cls: 'fail',
-          text: `  Expected ${valueToText(result.expected)} but got ${valueToText(result.actual)}`,
+      try {
+        const res = await fetch('/api/stt', {
+          method: 'POST',
+          headers: { 'Content-Type': mimeType },
+          body: blob,
         });
+        const data = await res.json();
+        const transcript = data.transcript || '';
+
+        if (transcript) {
+          // Show transcript briefly in the input, then auto-submit
+          document.getElementById('answer-ta').value = transcript;
+          setStatus(`Heard: "${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"`, 'ok');
+          // Small delay so the user can see what was captured
+          await new Promise(r => setTimeout(r, 600));
+          sendAnswer(transcript);
+        } else {
+          setStatus('No speech detected — speak again or type your answer', '');
+          // Re-start listening so the user doesn\'t have to click
+          if (!micMuted) startVoiceRecording();
+        }
+      } catch (e) {
+        setStatus('STT error — type your answer manually', '');
+      }
+    }
+
+    // ── Chat ───────────────────────────────────────────────────────────────────
+    function addAIMessage(text, num) {
+      const c = document.getElementById('messages');
+      const d = document.createElement('div');
+      d.className = 'fade-in';
+      d.innerHTML = `<div class="msg-ai-lbl">Interviewer · Q${num}</div><div class="msg-ai">${esc(text)}</div>`;
+      c.appendChild(d);
+      scrollMessages();
+    }
+
+    function addUserMessage(text) {
+      const c = document.getElementById('messages');
+      const d = document.createElement('div');
+      d.innerHTML = `<div class="msg-user">${esc(text)}</div>`;
+      c.appendChild(d);
+      scrollMessages();
+    }
+
+    function showThinking() {
+      const c = document.getElementById('messages');
+      const d = document.createElement('div');
+      d.id = 'thinking';
+      d.className = 'thinking';
+      d.innerHTML = `<div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>`;
+      c.appendChild(d);
+      scrollMessages();
+    }
+
+    function removeThinking() { document.getElementById('thinking')?.remove(); }
+
+    function scrollMessages() {
+      const c = document.getElementById('messages');
+      c.scrollTop = c.scrollHeight;
+    }
+
+    // ── Send Answer ────────────────────────────────────────────────────────────
+    // `directAnswer` is passed by processRecording (voice path);
+    // when undefined, the text is read from the textarea (keyboard path).
+    async function sendAnswer(directAnswer) {
+      // Stop any active recording first
+      if (isRecording) stopVoiceRecording();
+
+      const taEl = document.getElementById('answer-ta');
+      const answer = directAnswer !== undefined ? directAnswer : taEl.value.trim();
+      if (!answer) return;
+
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      console.log(`[${timestamp}] 🔄 [SEND ANSWER] Submitting answer for Q${questionNum}: "${answer.substring(0, 60)}${answer.length > 60 ? '...' : ''}"`);
+
+      const sendBtn = document.getElementById('send-btn');
+      const voiceBtn = document.getElementById('voice-btn');
+      sendBtn.disabled = true;
+      voiceBtn.disabled = true;
+      taEl.disabled = true;
+
+      addUserMessage(answer);
+      taEl.value = '';
+      showThinking();
+      setStatus('Evaluating your answer…', 'active');
+
+      try {
+        const res = await fetch('/api/interview/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            answer,
+            question_num: questionNum,
+          }),
+        });
+
+        const rawBody = await res.text();
+        let data;
+        try {
+          data = JSON.parse(rawBody);
+        } catch (parseErr) {
+          throw new Error(`Non-JSON response (${res.status}): ${rawBody.slice(0, 180)}`);
+        }
+        removeThinking();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        const resp = data.response || {};
+        const followUpText = typeof resp.follow_up === 'string' ? resp.follow_up : (resp.follow_up != null ? String(resp.follow_up) : '');
+        const transitionText = typeof resp.transition === 'string' ? resp.transition : (resp.transition != null ? String(resp.transition) : '');
+        const questionText = typeof resp.question === 'string' ? resp.question : (resp.question != null ? String(resp.question) : '');
+        console.log(`[${timestamp}] 📨 [RESPONSE] should_follow_up=${resp.should_follow_up}, has_follow_up=${!!resp.follow_up}, next_question=${!!resp.question}`);
+
+        // Collect score
+        if (resp.evaluation?.score != null) scores.push(resp.evaluation.score);
+
+        // If follow-up needed, speak and display it (recording restarts after TTS)
+        if (resp.should_follow_up && followUpText && !resp.session_complete) {
+          const tsFollow = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+          console.log(`[${tsFollow}] 📍 [FOLLOW-UP] Question still Q${questionNum} (follow-up detected, returning early)`);
+          addAIMessage(followUpText, questionNum);
+          await speakText(followUpText);
+          // Don't increment questionNum for follow-ups
+          return;
+        }
+
+        const oldQ = questionNum;
+        questionNum++;
+        const displayQ = Math.min(questionNum, totalQuestions);
+        const tsUpdate = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+        console.log(`[${tsUpdate}] 📊 [QUESTION UPDATE] Q${oldQ} → Q${questionNum} (badge updated)`);
+        document.getElementById('q-badge').textContent = `Q ${displayQ} / ${totalQuestions}`;
+
+        if (resp.session_complete || questionNum > totalQuestions) {
+          // Speak closing line then redirect
+          const closing = transitionText || "That concludes our interview. Thank you for your time!";
+          addAIMessage(closing, questionNum - 1);
+          await speakText(closing);
+          if (resp.session_complete || questionNum > totalQuestions) {
+            const closing = transitionText || "That concludes our interview. Thank you for your time!";
+
+            // ── NEW: check if coding round should follow ──
+            if (resp.coding_round_triggered) {
+              localStorage.setItem('mm_coding_round', 'true');
+              addAIMessage(closing + " Now let's move to the coding round.", questionNum - 1);
+              await speakText(closing + " Now let's move to the coding round.");
+              loadCodingProblem();   // load problem inline instead of redirecting
+              return;                // don't go to report yet
+            }
+            // ─────────────────────────────────────────────
+
+            addAIMessage(closing, questionNum - 1);
+            await speakText(closing);
+            goToReport();
+            return;
+          }
+          goToReport();
+          return;
+        }
+
+
+
+        // Speak transition if present
+        if (transitionText) {
+          const transDiv = document.createElement('div');
+          transDiv.className = 'fade-in';
+          transDiv.innerHTML = `<div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:4px;letter-spacing:.06em;">Interviewer</div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:6px 10px;border-left:2px solid rgba(255,255,255,0.08);">${esc(transitionText)}</div>`;
+          document.getElementById('messages').appendChild(transDiv);
+          scrollMessages();
+          await speakText(transitionText);
+        }
+
+        // Display & speak next question (speakText auto-restarts recording when done)
+        if (questionText) {
+          // If the next question requires the code editor, fetch and display the problem
+          // first — routing.py has already picked it, so the fetch is instant and correct
+          if (resp.requires_code_editor) {
+            await loadCodingProblem();
+          }
+          addAIMessage(questionText, questionNum);
+          await speakText(questionText);
+        }
+
+      } catch (e) {
+        console.error('[SEND ANSWER ERROR]', e);
+        removeThinking();
+        const errMsg = e?.message ? String(e.message) : 'Unknown error';
+        setStatus(`Request failed: ${errMsg}`, '');
+        addAIMessage(`⚠ Request failed: ${esc(errMsg)}`, questionNum);
+      } finally {
+        sendBtn.disabled = false;
+        voiceBtn.disabled = false;
+        taEl.disabled = false;
+      }
+    }
+
+    // Enter to send (Shift+Enter for newline)
+    document.getElementById('answer-ta').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAnswer();
       }
     });
 
-    renderConsole(lines);
-  }
-
-  async function runCode() {
-    const btn = document.getElementById('run-btn');
-    if (!currentProblem) return;
-
-    saveCurrentCode();
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Running…';
-    renderConsole([{ cls: 'info', text: `Running ${currentProblem.test_cases.length} test${currentProblem.test_cases.length === 1 ? '' : 's'}…` }]);
-
-    try {
-      const res = await fetch('/api/code/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: ta.value,
-          test_cases: currentProblem.test_cases,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-
-      renderRunResults(data);
-
-      const passed = data.results.filter(result => result.passed).length;
-      const total = data.results.length;
-      document.getElementById('test-badge').textContent = `${passed}/${total}`;
-      document.getElementById('test-badge').style.color = data.all_passed ? 'var(--green)' : '#ff6b6b';
-    } catch (error) {
-      renderConsole([
-        { cls: 'fail', text: `Run failed: ${error.message}` },
-      ]);
-      document.getElementById('test-badge').textContent = 'Error';
-      document.getElementById('test-badge').style.color = '#ff6b6b';
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '▶ Run Tests';
+    // ── End / Report ───────────────────────────────────────────────────────────
+    function confirmEnd() {
+      if (confirm('End this interview session?')) goToReport();
     }
-  }
+
+    function goToReport() {
+      clearInterval(timerInterval);
+      camStream?.getTracks().forEach(t => t.stop());
+      micStream?.getTracks().forEach(t => t.stop());
+      if (cameraAnalyzer) cameraAnalyzer.stop();
+
+      localStorage.setItem('mm_scores', JSON.stringify(scores));
+      localStorage.setItem('mm_duration', elapsedSeconds);
+      localStorage.setItem('mm_violations', JSON.stringify(violationStats));
+      window.location.href = '/report';
+    }
+
+    // ── UI helpers ─────────────────────────────────────────────────────────────
+    function setSpeaking(on) {
+      document.getElementById('speaking-badge').classList.toggle('visible', on);
+    }
+
+    function setStatus(msg, cls) {
+      const el = document.getElementById('status-text');
+      el.textContent = msg;
+      el.className = 'status-text' + (cls ? ' ' + cls : '');
+    }
+
+    function displayViolationStats() {
+      if (!violationStats || violationStats.total === 0) return;
+      const msg = `Violations: Posture ${violationStats.poseNotUpright} | Looking ${violationStats.notLooking} | Centering ${violationStats.faceNotCentered} (Total: ${violationStats.total})`;
+      console.log(`[VIOLATIONS] ${msg}`);
+      return msg;
+    }
+
+    // ── Editor ─────────────────────────────────────────────────────────────────
+    ta.addEventListener('input', updateLineNums);
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const s = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = s + 4;
+        updateLineNums();
+      }
+    });
+
+    function updateLineNums() {
+      const lines = ta.value.split('\n');
+      document.getElementById('line-nums').innerHTML = lines.map((_, i) => i + 1).join('<br>');
+    }
+
+    function resetCode() {
+      ta.value = 'def solution():\n    # Write your solution here\n    pass\n';
+      updateLineNums();
+    }
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function switchTab(btn, tab) {
+      document.querySelectorAll('.etab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    async function runCode() {
+      const btn = document.getElementById('run-btn');
+      const code = document.getElementById('code-ta').value.trim();
+      if (!code) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Running…';
+
+      const consoleEl = document.getElementById('console');
+      consoleEl.innerHTML = '<div class="console-lbl">Console Output</div>';
+
+      try {
+        const res = await fetch('/api/coding/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, code }),
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          consoleEl.innerHTML += `<div class="c-line fail">❌ ${esc(data.error)}</div>`;
+          return;
+        }
+
+        // Show each test result in console
+        data.results?.forEach((r, i) => {
+          const cls = r.passed ? 'pass' : 'fail';
+          const icon = r.passed ? '✅' : '❌';
+          consoleEl.innerHTML += `
+        <div class="c-line ${cls}">${icon} Test ${i + 1} — Input: ${esc(String(r.input))} → Expected: ${esc(String(r.expected))} | Got: ${esc(String(r.got))} (${r.runtime_ms}ms)</div>`;
+        });
+
+        // Summary badge
+        const badge = document.getElementById('test-badge');
+        badge.textContent = `${data.passed}/${data.total} passed`;
+        badge.style.color = data.pass_rate === 1 ? 'var(--green)' : data.pass_rate >= 0.5 ? '#f5a623' : '#ff6b6b';
+
+        // Complexity in console
+        if (data.complexity) {
+          consoleEl.innerHTML += `<div class="c-line" style="color:rgba(255,255,255,0.35);margin-top:6px;">Time: ${esc(data.complexity.time)} · Space: ${esc(data.complexity.space)}</div>`;
+        }
+
+        // ── NEW: Speak analysis then follow-up question ────────────────────────
+        if (data.analysis) {
+          const a = data.analysis;
+
+          // Build a spoken summary from the analysis fields (matching new shape)
+          const parts = [a.summary];
+          if (a.strengths?.length) parts.push(`Strengths: ${a.strengths.join(', ')}.`);
+          if (a.issues?.length && a.issues[0] !== 'None') parts.push(`Issues: ${a.issues.join(', ')}.`);
+          if (a.complexity_note) parts.push(a.complexity_note);
+          const analysisText = parts.filter(Boolean).join(' ');
+
+          // Display and speak the analysis
+          addAIMessage(analysisText, questionNum);
+          await speakText(analysisText);
+
+          // Then speak the follow-up question if present
+          if (data.follow_up_question) {
+            addAIMessage(data.follow_up_question, questionNum);
+            await speakText(data.follow_up_question);
+            // Don't auto-start recording here — speakText already does it at the end
+          }
+        }
+
+        if (data.pass_rate !== undefined) {
+          localStorage.setItem('mm_coding_result', JSON.stringify(data));
+        }
+
+      } catch (e) {
+        consoleEl.innerHTML += `<div class="c-line fail">⚠ Request failed: ${esc(e.message)}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '▶ Run Tests';
+      }
+    }
   </script>
 
   <!-- MediaPipe Scripts for Camera Analysis -->
@@ -1067,4 +1776,5 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
   <script defer src="/Camera_analyser/script.js"></script>
 </body>
+
 </html>

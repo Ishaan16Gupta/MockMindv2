@@ -111,7 +111,8 @@ def start_interview():
         "session_id": session_id,
         "response": {
             "question": session["question"],
-            "total_questions": session["total_questions"]
+            "total_questions": session["total_questions"],
+            "requires_code_editor": session.get("requires_code_editor", False),
         }
     })
 
@@ -201,9 +202,26 @@ def interview_answer():
     if not answer:
         return jsonify({"error": "Empty answer"}), 400
 
+    session = SESSIONS[session_id]
+    cfg = session.get("cfg", {})
+    total = cfg.get("total_questions", 5)
+    technical_count = cfg.get("technical", 0)
+    non_technical = total - technical_count
+    coding_q_numbers = set(range(non_technical + 1, total + 1))  # 1-based question numbers
+    next_q_num = question_num + 1
+
+    # If the NEXT question will be a coding one, pick the problem NOW before the AI
+    # generates its question — so the snippet gets injected into the prompt correctly.
+    if next_q_num in coding_q_numbers and not session.get("pending_coding_problem") and not session.get("active_coding_problem"):
+        problems = session.get("problems", [])
+        problem_index = session.get("problem_index", 0)
+        if problem_index < len(problems):
+            session["pending_coding_problem"] = problems[problem_index]
+            session["problem_index"] = problem_index + 1
+
     try:
         resp = interview_flow.process_answer(
-            session      = SESSIONS[session_id],
+            session      = session,
             answer       = answer,
             question_num = question_num,
             camera_confidence = camera_confidence,
@@ -216,6 +234,46 @@ def interview_answer():
 
     return jsonify({"response": resp})
 
+
+@app.route("/api/coding/problem", methods=["GET"])
+def get_coding_problem():
+    """Returns the coding problem already picked for this session."""
+    session_id = request.args.get("session_id")
+    if not session_id or session_id not in SESSIONS:
+        return jsonify({"error": "Session not found"}), 404
+
+    full_problem = SESSIONS[session_id].get("active_coding_problem")
+    if not full_problem:
+        return jsonify({"error": "No coding problem assigned to this session"}), 404
+
+    # Return properly formatted problem for frontend
+    formatted = code_editor.problem_description(full_problem)
+    return jsonify(formatted)
+
+
+@app.route("/api/coding/submit", methods=["POST"])
+def submit_coding_solution():
+    """Accepts submitted code, runs it, returns evaluation results."""
+    data = request.get_json() or {}
+    session_id = data.get("session_id")
+    code = data.get("code", "").strip()
+
+    if not code:
+        return jsonify({"error": "No code submitted"}), 400
+    if session_id and session_id not in SESSIONS:
+        return jsonify({"error": "Session not found"}), 404
+
+    session_problem = None
+    if session_id and session_id in SESSIONS:
+        session_problem = SESSIONS[session_id].get("active_coding_problem")
+
+    result = code_editor.run_coding_round(code, problem=session_problem)
+
+    if session_id:
+        SESSIONS[session_id]["coding_done"] = True
+        SESSIONS[session_id]["coding_result"] = result
+
+    return jsonify(result)
 
 # ── RUN SERVER ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

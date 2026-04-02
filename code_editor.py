@@ -202,6 +202,149 @@ Instructions:
         return None
 
 
+# ── API ENTRY POINTS FOR INTERVIEW FLOW ─────────────────────────────────────
+
+def get_problem() -> dict:
+    """Return a random problem for the frontend to display."""
+    problem = random.choice(PROBLEMS)
+    return problem
+
+
+def analyze_code_submission(problem: dict, code: str, results: list) -> dict:
+    """
+    Sends code + test results to Groq and returns a structured analysis.
+    Returns: { "summary": str, "strengths": [...], "issues": [...] }
+    """
+    prompt = f"""
+You are a senior software engineer reviewing a coding interview submission.
+
+Problem: {problem['title']}
+Description: {problem['description']}
+
+Candidate Code:
+{code}
+
+Test Results:
+{json.dumps(results, indent=2)}
+
+Respond ONLY in this JSON format, no extra text:
+{{
+  "summary": "one sentence overall assessment",
+  "strengths": ["strength 1", "strength 2"],
+  "issues": ["issue 1", "issue 2"]
+}}
+
+- Base strengths and issues on the actual code and test results
+- If no issues, write "None" in issues list
+- ONLY mention syntax errors if explicitly present in test results
+- If no error is present, DO NOT claim syntax issues
+- Keep everything concise
+"""
+    response = gq.call_groq(
+        "You are a strict coding interviewer. Only return valid JSON.",
+        [{"role": "user", "content": prompt}]
+    )
+    try:
+        return response if isinstance(response, dict) else json.loads(response)
+    except Exception:
+        print("⚠️ Failed to parse analysis response")
+        return {"summary": "Could not analyze.", "strengths": [], "issues": []}
+
+
+def generate_coding_followup(problem: dict, code: str, analysis: dict) -> str:
+    """
+    Given the analysis of a submission, generates one targeted follow-up question.
+    Returns: a single follow-up question string.
+    """
+    prompt = f"""
+You are conducting a coding interview. The candidate just submitted a solution.
+
+Problem: {problem['title']}
+
+Their code:
+{code}
+
+Your analysis of their solution:
+{json.dumps(analysis, indent=2)}
+
+Ask ONE specific follow-up question. It should probe:
+- A weakness or edge case you identified in their code, OR
+- Their understanding of the time/space complexity of their approach, OR
+- How they would improve or scale their solution
+
+Return ONLY the question as a plain string. No JSON, no preamble.
+"""
+    response = gq.call_groq(
+        "You are a strict coding interviewer. Ask one sharp follow-up question.",
+        [{"role": "user", "content": prompt}]
+    )
+    if isinstance(response, dict):
+        return response.get("question") or response.get("text") or str(response)
+    return str(response).strip()
+
+
+def run_coding_round(code: str, problem: dict = None) -> dict:
+    """API entry point: evaluate submitted code and return results as a dict.
+
+    Args:
+        code:    the candidate's submitted code
+        problem: the exact problem dict that was shown to the candidate.
+                 If None, a random problem is picked.
+    """
+    if problem is None:
+        problem = random.choice(PROBLEMS)
+
+    safe, reason = is_safe_code(code)
+    if not safe:
+        return {"error": reason, "problem": problem["title"]}
+
+    results = []
+    passed_count = 0
+    for tc in problem["test_cases"]:
+        res = run_python_code(code, tc["input"])
+        passed = res.get("error") is None and res.get("result") == tc["expected"]
+        if passed:
+            passed_count += 1
+        results.append({
+            "passed": passed,
+            "input": tc["input"],
+            "expected": tc["expected"],
+            "got": res.get("result"),
+            "runtime_ms": res.get("runtime_ms"),
+            "error": res.get("error"),
+        })
+
+    total = len(problem["test_cases"])
+    complexity = analyse_complexity(code)
+    analysis = analyze_code_submission(problem, code, results)
+    follow_up = generate_coding_followup(problem, code, analysis)
+
+    return {
+        "problem": problem["title"],
+        "difficulty": problem["difficulty"],
+        "passed": passed_count,
+        "total": total,
+        "pass_rate": passed_count / total if total else 0,
+        "complexity": complexity,
+        "results": results,
+        "analysis": analysis,
+        "follow_up_question": follow_up,
+    }
+
+
+def problem_description(problem) -> dict:
+    """Return a clean problem description for the frontend."""
+    return {
+        "title": problem["title"],
+        "difficulty": problem["difficulty"],
+        "description": problem["description"],
+        "input_format": problem["input_format"],
+        "output_format": problem["output_format"],
+        "test_cases": problem["test_cases"][:2],  # only show examples
+        "starter_code": problem["starter_code"],
+    }
+
+
 
 if __name__ == "__main__":
     mode = input("\nMode (voice / coding): ").strip().lower()

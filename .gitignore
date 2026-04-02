@@ -3,3 +3,5 @@ venv/
 temp/
 api_code_editor/.env
 api_code_editor/__pycache__/
+speech_portion/__pycache__/
+nlp_confidence_checker/.pytest_cache/

@@ -71,7 +71,7 @@ Candidate → VAD → STT → Groq LLM → TTS → Response
 
 ---
 
-## Tech Stack
+## Current Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -86,7 +86,7 @@ Candidate → VAD → STT → Groq LLM → TTS → Response
 
 ---
 
-## Performance
+## Target Performance
 
 | Component | Latency |
 |---|---|

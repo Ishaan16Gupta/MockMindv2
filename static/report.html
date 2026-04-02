@@ -125,6 +125,8 @@
     const scores = JSON.parse(localStorage.getItem('mm_scores') || '[]');
     const elapsedSeconds = parseInt(localStorage.getItem('mm_duration') || '0');
     const config = JSON.parse(localStorage.getItem('mm_config') || '{}');
+    const nlpReport = JSON.parse(localStorage.getItem('mm_nlp_report') || '{}');
+    console.log('NLP Report:', JSON.stringify(nlpReport, null, 2));
 
     const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
     const mins = Math.floor(elapsedSeconds / 60);
@@ -132,13 +134,13 @@
 
     // Verdict
     let emoji, verdict, sub;
-    if (avg >= 7.5)      { emoji='🏆'; verdict='Strong Hire';  sub='Excellent performance across all questions'; }
-    else if (avg >= 6)   { emoji='📈'; verdict='Consider';     sub='Good performance with some areas to strengthen'; }
-    else if (avg >= 4.5) { emoji='💪'; verdict='Borderline';   sub='Needs more preparation before interviewing'; }
-    else                 { emoji='📚'; verdict='Not Ready';    sub='Significant preparation recommended'; }
+    if (avg >= 7.5)      { emoji='<img src="/static/assets/strong_hire.png" alt="Strong Hire" style="width:54px; height:54px;">'; verdict='Strong Hire';  sub='Excellent performance across all questions'; }
+    else if (avg >= 6)   { emoji='<img src="/static/assets/consider.png" alt="Consider" style="width:54px; height:54px;">'; verdict='Consider';     sub='Good performance with some areas to strengthen'; }
+    else if (avg >= 4.5) { emoji='<img src="/static/assets/borderline.png" alt="Borderline" style="width:54px; height:54px;">'; verdict='Borderline';   sub='Needs more preparation before interviewing'; }
+    else                 { emoji='<img src="/static/assets/not_ready.png" alt="Not Ready" style="width:54px; height:54px;">'; verdict='Not Ready';    sub='Significant preparation recommended'; }
 
     // Header
-    document.getElementById('r-emoji').textContent = emoji;
+    document.getElementById('r-emoji').innerHTML = emoji;
     document.getElementById('r-sub').textContent = sub + (config.label ? ` · ${config.label}` : '');
     document.getElementById('s-total').textContent = avg.toFixed(1) + '/10';
     document.getElementById('s-verdict').textContent = verdict;
@@ -156,13 +158,15 @@
       }).join('');
     }
 
-    // Metrics — derived from scores (replace with real NLP data when available)
-    const rand = (base, spread) => Math.min(10, Math.max(0, base + (Math.random()*spread*2 - spread)));
+    // Utility: random jitter for metric placeholder
+    const rand = (base, spread) => Math.min(10, Math.max(0, base + (Math.random() * spread * 2 - spread)));
+
+    // Metrics — use real NLP data where available
     const metrics = {
-      clarity: rand(avg, 0.8),
-      confidence: rand(avg - 0.5, 0.6),
-      depth: rand(avg, 0.5),
-      concise: rand(avg + 0.3, 1),
+      clarity: nlpReport.confidence ? nlpReport.confidence.score : rand(avg, 0.8),
+      confidence: nlpReport.confidence ? nlpReport.confidence.score : rand(avg - 0.5, 0.6),
+      depth: nlpReport.confidence ? nlpReport.confidence.score : rand(avg, 0.5),
+      concise: nlpReport.confidence ? (10 - nlpReport.filler_words?.rate_per_minute || 0) : rand(avg + 0.3, 1),
     };
 
     setTimeout(() => {
@@ -183,6 +187,14 @@
       ? ['Use STAR method more consistently', 'Quantify the impact of your work', 'Reduce filler words and hedging language']
       : ['Explore more edge cases proactively', 'Discuss trade-offs more explicitly'];
 
+    // Add NLP-based feedback
+    if (nlpReport.filler_words && nlpReport.filler_words.count > 3) {
+      improve.push(`Reduce filler words (you used ${nlpReport.filler_words.count} fillers per minute at a rate of ${nlpReport.filler_words.rate_per_minute.toFixed(1)}/min, top ones: ${nlpReport.filler_words.top_three.join(', ')}) to sound more confident and polished.`);
+    }
+    if (nlpReport.camera_confidence != null && nlpReport.camera_confidence < 7) {
+      improve.push(`Improve posture and eye contact (camera confidence score: ${nlpReport.camera_confidence.toFixed(1)}/10).`);
+    }
+
     document.getElementById('strengths-list').innerHTML = strengths
       .map(s => `<div class="fb-item"><span class="fb-icon" style="color:#1a7a6e;">✓</span>${s}</div>`).join('');
     document.getElementById('improve-list').innerHTML = improve
@@ -191,12 +203,29 @@
     // Analysis
     const best = scores.length ? scores.indexOf(Math.max(...scores)) : -1;
     const worst = scores.length ? scores.indexOf(Math.min(...scores)) : -1;
-    document.getElementById('comm-text').innerHTML = scores.length
+    let analysisText = scores.length
       ? `You completed ${scores.length} question${scores.length !== 1 ? 's' : ''} with an average score of <strong>${avg.toFixed(1)}/10</strong>. 
          ${avg >= 6.5 ? 'Your communication was generally clear and well-structured.' : 'Focus on structuring answers using the STAR framework (Situation, Task, Action, Result).'}
-         ${best >= 0 ? ` Your strongest answer was Q${best+1} (${Math.max(...scores).toFixed(1)}/10)` : ''}${worst >= 0 && worst !== best ? ` and your weakest was Q${worst+1} (${Math.min(...scores).toFixed(1)}/10).` : '.'}
-         For richer filler-word and confidence analysis, integrate the <code>nlp_confidence_checker</code> module.`
+         ${best >= 0 ? ` Your strongest answer was Q${best+1} (${Math.max(...scores).toFixed(1)}/10)` : ''}${worst >= 0 && worst !== best ? ` and your weakest was Q${worst+1} (${Math.min(...scores).toFixed(1)}/10).` : '.'}`
       : 'No answers were recorded for this session.';
+    
+    // Add NLP details
+    if (nlpReport.filler_words) {
+      analysisText += ` Filler word analysis: ${nlpReport.filler_words.count} total fillers (${nlpReport.filler_words.rate_per_minute.toFixed(1)}/min).`;
+      if (nlpReport.filler_words.top_three?.length) {
+        analysisText += ` Top fillers: ${nlpReport.filler_words.top_three.join(', ')}.`;
+      }
+    } else {
+      analysisText += ' Filler word analysis: unavailable.';
+    }
+
+    if (nlpReport.camera_confidence != null) {
+      analysisText += ` Camera posture confidence: ${nlpReport.camera_confidence.toFixed(1)}/10.`;
+    } else {
+      analysisText += ' Camera posture confidence: unavailable.';
+    }
+
+    document.getElementById('comm-text').innerHTML = analysisText;
 
     // ── Download ──────────────────────────────────────────────────────────────
     function downloadReport() {

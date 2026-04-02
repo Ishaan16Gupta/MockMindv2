@@ -203,8 +203,8 @@
         <div class="video-overlay"></div>
         <div class="posture-badge"><div class="p-dot" id="p-dot"></div><span id="p-text">Checking…</span></div>
         <div class="vc-row">
-          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mute mic">🎤</button>
-          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Toggle camera">📹</button>
+          <button class="vc-btn" id="mic-btn" onclick="toggleMic()" title="Mute mic"><img src="/static/assets/microphone_on.png" alt="Mic On" style="width:16px; height:16px;"></button>
+          <button class="vc-btn" id="cam-btn" onclick="toggleCam()" title="Toggle camera"><img src="/static/assets/video-on.png" alt="Cam On" style="width:16px; height:16px;"></button>
         </div>
       </div>
 
@@ -289,6 +289,8 @@
   let audioChunks    = [];
   let isRecording    = false;
   let micStream      = null;  // dedicated stream for STT (separate from camera stream)
+
+  let cameraConfidences = [];  // collect posture scores
 
   let currentProblemIndex = 0;
   let currentProblem = WHITEBOARD_PROBLEMS[0];
@@ -472,14 +474,38 @@
   function toggleMic() {
     micMuted = !micMuted;
     const btn = document.getElementById('mic-btn');
-    btn.textContent = micMuted ? '🔇' : '🎤';
+    btn.innerHTML = micMuted ? '<img src="/static/assets/microphone_off.png" alt="Mic Off" style="width:16px; height:16px;">' : '<img src="/static/assets/microphone_on.png" alt="Mic On" style="width:16px; height:16px;">';
     btn.classList.toggle('muted', micMuted);
   }
 
-  function toggleCam() {
+  async function toggleCam() {
     camOff = !camOff;
-    document.getElementById('cam-btn').textContent = camOff ? '📷' : '📹';
-    if (camStream) camStream.getVideoTracks().forEach(t => t.enabled = !camOff);
+    const btn = document.getElementById('cam-btn');
+    btn.innerHTML = camOff ? '<img src="/static/assets/video-off.png" alt="Cam Off" style="width:16px; height:16px;">' : '<img src="/static/assets/video-on.png" alt="Cam On" style="width:16px; height:16px;">';
+    btn.classList.toggle('muted', camOff);
+    if (camOff) {
+      // Turn off camera
+      if (camStream) {
+        camStream.getTracks().forEach(track => track.stop());
+        camStream = null;
+      }
+      document.getElementById('video-el').srcObject = null;
+      document.getElementById('p-text').textContent = 'Camera off';
+      document.getElementById('p-dot').style.background = '#ff6b6b';
+    } else {
+      // Turn on camera
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('video-el').srcObject = camStream;
+        startPostureCheck();
+      } catch(e) {
+        document.getElementById('p-text').textContent = 'Camera off';
+        document.getElementById('p-dot').style.background = '#ff6b6b';
+        camOff = true; // revert
+        btn.innerHTML = '<img src="/static/assets/video-off.png" alt="Cam Off" style="width:16px; height:16px;">';
+        btn.classList.toggle('muted', true);
+      }
+    }
   }
 
   // ── Camera Analyzer State ──────────────────────────────────────────────────
@@ -498,6 +524,10 @@
     cameraAnalyzer = new CameraAnalyzer(videoEl, (data) => {
       const { state, violations } = data;
       violationStats = violations;
+      
+      // Collect posture score
+      const postureScore = (state.poseIsUpright && state.isLooking && state.faceCentered) ? 10 : 0;
+      cameraConfidences.push(postureScore);
       
       // Update UI badge
       const pDot = document.getElementById('p-dot');
@@ -757,6 +787,12 @@
     const answer = directAnswer !== undefined ? directAnswer : taEl.value.trim();
     if (!answer) return;
 
+    // Calculate average camera confidence
+    let camera_confidence = null;
+    if (cameraConfidences.length > 0) {
+      camera_confidence = cameraConfidences.reduce((a, b) => a + b, 0) / cameraConfidences.length;
+    }
+
     const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
     console.log(`[${timestamp}] 🔄 [SEND ANSWER] Submitting answer for Q${questionNum}: "${answer.substring(0, 60)}${answer.length > 60 ? '...' : ''}"`);
 
@@ -779,6 +815,7 @@
           session_id:   sessionId,
           answer,
           question_num: questionNum,
+          camera_confidence,
         }),
       });
 
@@ -826,9 +863,12 @@
         const closing = transitionText || "That concludes our interview. Thank you for your time!";
         addAIMessage(closing, questionNum - 1);
         await speakText(closing);
+        localStorage.setItem('mm_nlp_report', JSON.stringify(resp.nlp_report || {}));
         goToReport();
         return;
       }
+
+      localStorage.setItem('mm_nlp_report', JSON.stringify(resp.nlp_report || {}));
 
       // Speak transition if present
       if (transitionText) {

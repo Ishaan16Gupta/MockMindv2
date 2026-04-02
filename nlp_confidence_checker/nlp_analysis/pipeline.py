@@ -1,3 +1,4 @@
+
 """
 Pipeline orchestrator — Steps 1, 2, and 3.
 
@@ -40,8 +41,8 @@ def analyze(transcript: str) -> dict[str, Any]:
     # Step 2 — Count filler words
     filler_result = analyze_fillers(cleaned)
 
-    # Step 3 — Score confidence
-    confidence_result = score_confidence(cleaned)
+    # Step 3 — Score confidence (now includes filler penalty)
+    confidence_result = score_confidence(cleaned, filler_count=filler_result["count"])
 
     return {
         "cleaned_transcript": cleaned,

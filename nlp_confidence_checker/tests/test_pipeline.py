@@ -174,6 +174,12 @@ class TestConfidenceScorer:
         )
         assert 0.0 <= result["score"] <= 10.0
 
+    def test_filler_penalty_affects_score(self):
+        # Base score is neutral at 5.0 without hedges/asserts. 5 fillers should drop it.
+        result = score_confidence("A hash map stores key-value pairs.", filler_count=5)
+        assert result["score"] < 5.0
+        assert result["filler_count"] == 5
+
     def test_empty_input(self):
         result = score_confidence("")
         assert result["score"] == 5.0
@@ -215,9 +221,11 @@ class TestFullPipeline:
         result = analyze(MESSY_TRANSCRIPT)
         conf = result["confidence"]
         assert "score" in conf
+        assert "base_score" in conf
         assert "hedge_count" in conf
         assert "assert_count" in conf
         assert "low_confidence_moments" in conf
+        assert "filler_count" in conf
         assert isinstance(conf["score"], float)
         assert isinstance(conf["low_confidence_moments"], list)
 

@@ -1,3 +1,4 @@
+
 """
 Step 3 — Confidence scoring.
 
@@ -86,7 +87,7 @@ def _count_pattern_hits(text: str, patterns: list[re.Pattern]) -> int:
 # Public API
 # ---------------------------------------------------------------------------
 
-def score_confidence(cleaned_transcript: str) -> dict[str, Any]:
+def score_confidence(cleaned_transcript: str, filler_count: int = 0) -> dict[str, Any]:
     """
     Main entry point for Step 3.
 
@@ -94,10 +95,12 @@ def score_confidence(cleaned_transcript: str) -> dict[str, Any]:
     ----------
     cleaned_transcript : str
         Output of Step 1.
+    filler_count : int
+        Number of filler words found in the transcript (from Step 2).
 
     Returns
     -------
-    dict with keys: score, hedge_count, assert_count, low_confidence_moments
+    dict with keys: score, hedge_count, assert_count, low_confidence_moments, filler_count
     """
     if not cleaned_transcript or not cleaned_transcript.strip():
         return {
@@ -105,6 +108,7 @@ def score_confidence(cleaned_transcript: str) -> dict[str, Any]:
             "hedge_count": 0,
             "assert_count": 0,
             "low_confidence_moments": [],
+            "filler_count": filler_count,
         }
 
     nlp = _get_nlp()
@@ -131,13 +135,20 @@ def score_confidence(cleaned_transcript: str) -> dict[str, Any]:
 
     total = hedge_count + assert_count
     if total == 0:
-        score = 5.0
+        base_score = 5.0
     else:
-        score = round((assert_count / total) * 10, 1)
+        base_score = round((assert_count / total) * 10, 1)
+
+    # Penalty for filler word usage (higher filler count lowers confidence)
+    # each filler word reduces score by 0.2, capped to 3.0 to prevent overshoot
+    filler_penalty = min(3.0, filler_count * 0.2)
+    adjusted_score = round(max(0.0, base_score - filler_penalty), 1)
 
     return {
-        "score": score,
+        "score": adjusted_score,
+        "base_score": base_score,
         "hedge_count": hedge_count,
         "assert_count": assert_count,
         "low_confidence_moments": low_confidence_moments,
+        "filler_count": filler_count,
     }

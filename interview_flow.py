@@ -263,19 +263,19 @@ def process_answer(session: dict, answer: str, question_num: int, camera_confide
         resp["should_follow_up"] = False
         resp["follow_up"] = None
 
+    # Run NLP analysis on combined transcripts for interim and final states
+    combined_transcript = " ".join(session["transcripts"])
+    nlp_result = analyze(combined_transcript)
+    camera_scores = session["camera_confidences"]
+    if camera_scores:
+        avg_camera = sum(camera_scores) / len(camera_scores)
+        nlp_result["camera_confidence"] = avg_camera
+    else:
+        nlp_result["camera_confidence"] = None
+    resp["nlp_report"] = nlp_result
+
     if is_last:
         resp["session_complete"] = True
-        # Run NLP analysis on combined transcripts
-        combined_transcript = " ".join(session["transcripts"])
-        nlp_result = analyze(combined_transcript)
-        # Add camera confidence average
-        camera_scores = session["camera_confidences"]
-        if camera_scores:
-            avg_camera = sum(camera_scores) / len(camera_scores)
-            nlp_result["camera_confidence"] = avg_camera
-        else:
-            nlp_result["camera_confidence"] = None
-        resp["nlp_report"] = nlp_result
 
     session["question_num"] = question_num + 1
     return resp

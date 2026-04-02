@@ -1,135 +1,127 @@
-# 🚀 AI Mock Interview System  
-### *Agentic AI for Realistic Interview Preparation*
+# AI Mock Interview System
+*Agentic AI for Realistic Interview Preparation*
 
 ---
 
-## 📌 Overview
+## Overview
 
-The AI Mock Interview System is a real-time, agentic AI platform designed to simulate human-like interview experiences.
-
-Unlike traditional tools that rely on static Q&A, this system dynamically adapts, probes deeper, and evaluates candidates across technical, communication, and behavioral dimensions.
+The AI Mock Interview System is a real-time, agentic AI platform designed to simulate human-like interview experiences. Unlike conventional tools that rely on static question banks, this system dynamically adapts to candidate responses, conducts follow-up questioning, and evaluates candidates across technical, communication, and behavioral dimensions.
 
 ---
 
-## 🎯 Problem
+## Problem
 
-Current mock interview platforms suffer from:
+Existing mock interview platforms fall short in several key areas:
 
-- Lack of personalization (same questions for all users)
-- No real-time follow-up or cross-questioning
-- Robotic conversation flow
-- Limited evaluation (only correctness, no communication insights)
-- No integration of coding + reasoning + behavior
+- No personalization — identical questions across all candidates
+- Absence of real-time follow-up or cross-questioning
+- Rigid, scripted conversation flow
+- Surface-level evaluation limited to answer correctness
+- No unified assessment of coding, reasoning, and behavioral skills
 
-Based on findings from arXiv:2506.16542 (Multimodal AI Mock Interviews)
-
----
-
-## 💡 Solution
-
-We built an Agentic AI Interviewer that:
-
-- Adapts to candidate responses in real time
-- Conducts dynamic cross-questioning
-- Evaluates both code and thought process
-- Provides actionable post-interview feedback
-- Maintains natural conversational flow
+*Informed by findings from arXiv:2506.16542 (Multimodal AI Mock Interviews)*
 
 ---
 
-## ✨ Key Features
+## Solution
 
-### 🎯 Personalized Interviews
+We built an agentic AI interviewer that:
+
+- Adapts in real time based on candidate responses
+- Conducts dynamic cross-questioning to probe depth and edge cases
+- Evaluates both code quality and thought process simultaneously
+- Delivers actionable post-interview feedback
+- Maintains a natural, low-latency conversational flow
+
+---
+
+## Key Features
+
+### Personalized Interviews
 - Resume-based question generation
 - Company-specific difficulty modes
 - Adjustable interview complexity
 
-### 🔁 Dynamic Cross-Questioning
-- Follow-up questions based on answers
+### Dynamic Cross-Questioning
+- Contextual follow-up questions derived from answers
 - Probes reasoning, edge cases, and optimizations
 
-### 💻 Real-Time Coding Evaluation
-- Monaco-style code editor
-- Live execution (Judge0/Piston)
-- AI feedback on correctness, efficiency, and clarity
+### Real-Time Coding Evaluation
+- Monaco-style embedded code editor
+- Live code execution via Judge0 / Piston
+- AI feedback on correctness, efficiency, and code clarity
 
-### 🎤 Human-Like Conversation
-- Real-time voice interaction
-- Natural turn-taking
-- Low-latency responses (~600ms)
+### Human-Like Conversation
+- Real-time voice interaction with natural turn-taking
+- Low-latency end-to-end response (~600ms)
 
-### 📊 Post-Interview Analysis
+### Post-Interview Analysis
 - Confidence scoring
 - Filler word detection
-- Communication clarity
+- Communication clarity metrics
 - Code quality assessment
 
 ---
 
-## 🧠 System Architecture
+## System Architecture
 
-Candidate → VAD → STT → GPT-4o → TTS → Response
-
----
-
-## ⚙️ Tech Stack
-
-### Frontend
-- React.js
-- WebRTC
-- Monaco Editor
-
-### Speech Pipeline
-- VAD: Silero
-- STT: Deepgram
-- TTS: GPT-4o mini / ElevenLabs
-
-### AI Core
-- GPT-4o
-
-### Backend
-- Node.js / FastAPI
-- LiveKit
-
-### Analysis
-- MediaPipe
-- Custom scoring
-
-### Code Execution
-- Judge0 / Piston API
+```
+Candidate → VAD → STT → Groq LLM → TTS → Response
+```
 
 ---
 
-## ⚡ Performance
+## Tech Stack
 
-- VAD: ~10ms
-- STT: ~300ms
-- LLM: ~200ms
-- TTS: ~400ms
-
-Total latency: ~600ms
+| Layer | Technology |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Voice Activity Detection | Silero VAD |
+| Speech-to-Text | DeepGram |
+| Text-to-Speech | DeepGram |
+| AI Core | Groq |
+| Backend | Flask |
+| Code Execution | Python exec |
+| Analysis | Custom confidence model, code analyzer |
 
 ---
 
-## 🧩 MVP Scope
+## Performance
 
-- Tech interviews
+| Component | Latency |
+|---|---|
+| VAD | ~10ms |
+| STT | ~300ms |
+| LLM | ~200ms |
+| TTS | ~400ms |
+| **End-to-End** | **~600ms** |
+
+---
+
+## MVP Scope
+
+- Technical interviews
 - Voice interaction
 - Coding evaluation
-- Basic feedback metrics
+- Core feedback metrics
 
 ---
 
-## 🚀 Future Scope
+## Future Scope
 
-- Multi-domain interviews
-- Interview personas
-- Non-verbal analysis
-- Performance tracking
-- 3D avatars
+- Multi-domain interview support
+- Distinct interviewer personas
+- Non-verbal behavior analysis
+- Longitudinal performance tracking
+- 3D avatar integration
 
 ---
 
-## 👥 Team
+## Team
 
-(Add your team here)
+| Name |
+|---|
+| Ishaan Gupta |
+| Satvik Aggarwal |
+| Shruthi Sivaprasad |
+| Yuvraj Tyagi |

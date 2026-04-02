@@ -1,4 +1,5 @@
 __pycache__/
 venv/
 temp/
-.env/
+api_code_editor/.env
+api_code_editor/__pycache__/

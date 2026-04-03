@@ -1206,12 +1206,26 @@
       const btn = document.getElementById('mic-btn');
       btn.innerHTML = micMuted ? '<img src="/static/assets/microphone_off.png" alt="Mic off" style="width:24px; height:24px;">' : '<img src="/static/assets/microphone_on.png" alt="Mic on" style="width:24px; height:24px;">';
       btn.classList.toggle('muted', micMuted);
+      if (micStream) {
+        micStream.getAudioTracks().forEach(t => t.enabled = !micMuted);
+      }
     }
 
     function toggleCam() {
       camOff = !camOff;
       document.getElementById('cam-btn').innerHTML = camOff ? '<img src="/static/assets/video-off.png" alt="Cam off" style="width:24px; height:24px;">' : '<img src="/static/assets/video-on.png" alt="Cam on" style="width:24px; height:24px;">';
       if (camStream) camStream.getVideoTracks().forEach(t => t.enabled = !camOff);
+      document.getElementById('video-el').style.opacity = camOff ? '0' : '1';
+      
+      const pText = document.getElementById('p-text');
+      const pDot = document.getElementById('p-dot');
+      if (camOff) {
+        if (pText) pText.textContent = 'Camera stopped';
+        if (pDot) pDot.style.background = '#ff6b6b';
+      } else {
+        if (pText) pText.textContent = 'Checking…';
+        if (pDot) pDot.style.background = '#f5a623';
+      }
     }
 
     // ── Camera Analyzer State ──────────────────────────────────────────────────
@@ -1326,6 +1340,7 @@
       if (isRecording) {
         stopVoiceRecording();
       } else {
+        if (micMuted) toggleMic(); // Auto-unmute on manual record intent
         startVoiceRecording();
       }
     }
@@ -1335,6 +1350,7 @@
 
       try {
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStream.getAudioTracks().forEach(t => t.enabled = !micMuted);
       } catch (e) {
         setStatus('Microphone access denied', '');
         return;

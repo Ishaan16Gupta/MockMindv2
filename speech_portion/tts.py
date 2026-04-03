@@ -4,12 +4,13 @@ import numpy as np
 import tempfile
 import os
 import time
+from dotenv import load_dotenv
 
 # ==============================
 # CONFIG
 # ==============================
-
-DEEPGRAM_API_KEY = "fe66485a90ed1ba4eb58e7e2922bf4ecffd26de5"
+load_dotenv(override=True)
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY_tts")
 
 # Voice options (Deepgram Aura engine)
 # Female: aura-asteria-en, aura-luna-en, aura-stella-en, aura-athena-en, aura-hera-en

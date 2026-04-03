@@ -5,12 +5,13 @@ import tempfile
 import os
 import time
 from scipy.io.wavfile import write
+from dotenv import load_dotenv
 
 # ==============================
 # CONFIG
 # ==============================
-
-DEEPGRAM_API_KEY = "6b8bfb83f948ba8b960ca4b10421e7d1c7b22fbf"
+load_dotenv(override=True)
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY_stt")
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
